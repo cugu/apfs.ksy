@@ -183,10 +183,8 @@ types:
         type: u8
       - id: unknown3
         size: 80
-      - id: bin
-        type: u8
-      - id: bin2
-        type: u8
+      - id: volume_guid
+        size: 16
       - id: time1
         type: u8
       - id: unknown4
