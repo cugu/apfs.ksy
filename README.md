@@ -11,7 +11,8 @@ Offical Apple Documentation an APFS: https://developer.apple.com/library/content
 
 Name | Description | OS
 :--- | :---------- | :---
-test1.dd | Fresh filesystem, one APFS volume, no files or folders | macOS Sierra 10.12.3 (16D32)
+test1.dd | New filesystem, one APFS volume, no files or folders | macOS Sierra 10.12.3 (16D32)
+test3_head.dd | Non empty part of an 1GB image. Three volumes and a couple of files and folders | macOS Sierra 10.12.3 (16D32)
 
 ## Contributing
 Pull requests and issues are welcome!
