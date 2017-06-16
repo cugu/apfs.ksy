@@ -7,5 +7,11 @@ The Kaitai WebIDE to examine APFS filesystems and to continue reverse engineerin
 
 Offical Apple Documentation an APFS: https://developer.apple.com/library/content/documentation/FileManagement/Conceptual/APFS_Guide/Introduction/Introduction.html
 
+## Images
+
+Name | Description | OS
+:--- | :---------- | :---
+test1.dd | Fresh filesystem, one APFS volume, no files or folders | macOS Sierra 10.12.3 (16D32)
+
 ## Contributing
 Pull requests and issues are welcome!
