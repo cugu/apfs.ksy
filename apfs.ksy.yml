@@ -95,77 +95,90 @@ types:
       - id: totalblocks        
         type: u8
       - id: unknown2         
-        size: 16
+        size: 8
+      - id: entry_count
+        type: u4
+      - id: unk
+        type: u4
       - id: freeblocks         
         type: u8
+      - id: entries_offset
+        type: u4
       - id: unknown3             
-        size: 96
+        size: 92
       - id: prev_allocationinfofile_block
         type: u8
       - id: unknown10
         size: 200
-      - id: allocationinfofile_block
+    instances:
+      allocationinfofile_block:
+        pos: entries_offset
+        repeat: expr
+        repeat-expr: entry_count
         type: u8
+  alloc_entry:
+    seq:
+      - id: ver
+        type: u8
+      - id: u1
+        type: u4
+      - id: u2
+        type: u4
+      - id: total_blocks
+        type: u4
+      - id: free_blocks
+        type: u4
+      - id: allocationfile_block
+        type: u8
+      
   allocationinfofile:
     seq:
       - id: unknown              
         size: 4
-      - id: alloc_file_length
+      - id: entry_count
         type: u4
-      - id: alloc_file_version
-        type: u4
-      - id: unknown2         
-        size: 12
-      - id: total_blocks          
-        type: u4
-      - id: free_blocks           
-        type: u4
-      - id: allocationfile_block 
-        type: u4
+      - id: entries
+        type: alloc_entry
+        repeat: expr
+        repeat-expr: entry_count
+      
   btree:
     seq:
       - id: unknown
         size: 16
       - id: root   
         type: u8
-  checkpoint:
+  checkpoint_entry:
     seq:
+      - id: block_type
+        type: u2
+        enum: blocktypes
+      - id: flags
+        type: u2
       - id: u1
+        type: u4
+      - id: block_size
         type: u4
       - id: u2
         type: u4
       - id: u3
-        type: u2
+        type: u4
       - id: u4
-        type: u2
-      - id: u5
         type: u4
-      - id: u6
+      - id: block_id
+        type: u8
+      - id: block_num
+        type: u8
+  checkpoint:
+    seq:
+      - id: u1
         type: u4
-      - id: u7
+      - id: entry_count
         type: u4
-      - id: u8
-        type: u4
-      - id: u9
-        type: u4
-      - id: u10
-        type: u4
-      - id: u11
-        type: u4
-      - id: u12
-        type: u4
-      - id: u13
-        type: u4
-      - id: u14
-        type: u4
-      - id: u15
-        type: u4
-      - id: u16
-        type: u4
-      - id: u17
-        type: u4
-      - id: unknown
-        size: 1024
+      - id: entries
+        type: checkpoint_entry
+        repeat: expr
+        repeat-expr: entry_count
   volumesuperblock:
     seq:
       - id: magic
@@ -198,20 +211,24 @@ types:
       - id: name
         type: str
         size: 8
-        encoding: ASCII
+        encoding: UTF-8
   node:
     seq:
       - id: alignment
-        type: u4
+        type: u2
         enum: alignment
+      - id: u1
+        type: u2
       - id: entry_count
         type: u4
       - id: unknown3 
         type: u2
-      - id: head_size
+      - id: keys_offset
         type: u2
-      - id: uknown4
-        type: u4
+      - id: keys_size
+        type: u2
+      - id: data_offset
+        type: u2
       - id: meta_entry
         type: entry_header
       - id: entries
@@ -227,20 +244,26 @@ types:
   entry_header:
     seq:
       - id: key_offset
-        type: u2
+        type: s2
       - id: key_length
         type: u2
       - id: data_offset
-        type: u2
+        type: s2
       - id: data_length
         type: u2
+  fixed_entry_header:
+    seq:
+      - id: key_offset
+        type: s2
+      - id: data_offset
+        type: s2
   flex_entry:
     seq:
       - id: header
         type: entry_header
     instances:
       key:
-        pos: header.key_offset + _parent.head_size + 56
+        pos: header.key_offset + _parent.keys_offset + 56
         # size: header.key_length + 8
         type: key
       record:
@@ -254,21 +277,56 @@ types:
   fixed_entry:
     seq:
       - id: header
-        type: entry_header
+        type: fixed_entry_header
     instances:
       key:
-        pos: header.key_offset + _parent.head_size + 56
-        # size: header.key_length + 8
-        type: key
-      record:
-        pos: 4096 - (_parent.entry_count * 32 - _parent.meta_entry.data_offset) - 56
-        # size: _parent.meta_entry.data_length
-        repeat: expr
-        repeat-expr: _parent.entry_count
-        type:
-          switch-on: key.type
+        pos: header.key_offset + _parent.keys_offset + 56
+        type: 
+          switch-on: _parent._parent.header.padding
           cases:
-            entryflags::location: location_record
+            0x9: fixed_key_9
+            0xB: fixed_loc_key
+            _: fixed_key
+      record:
+        pos: 4096-header.data_offset-40
+        type: 
+          switch-on: _parent._parent.header.padding
+          cases:
+            0x9: fixed_data_9
+            0xB: fixed_loc_data
+          
+  fixed_key:
+    seq:
+      - id: unk
+        size: 16
+
+  fixed_loc_key:
+    seq:
+      - id: block_id
+        type: u8
+      - id: unk
+        type: u8
+  fixed_loc_data:
+    seq:
+      - id: u1
+        type: u4
+      - id: u2
+        type: u4
+      - id: block_num
+        type: u8
+  fixed_key_9:
+    seq:
+      - id: ver
+        type: u8
+      - id: block_num
+        type: u8
+  fixed_data_9:
+    seq:
+      - id: u1
+        type: u4
+      - id: u2
+        type: u4
+        
   key:
     seq:
       - id: parent_id
@@ -289,7 +347,7 @@ types:
       - id: dirname
         size: namelength
         type: str
-        encoding: ASCII
+        encoding: UTF-8
   location_key:
     seq:
       - id: version
@@ -355,3 +413,6 @@ enums:
   alignment:
     0x03: flex
     0x07: fixed
+  nodetype:
+    0x0000000b: location
+    0x0000000e: files
