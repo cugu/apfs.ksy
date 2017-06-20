@@ -4,9 +4,12 @@ meta:
 seq:
  - id: blocks
    type: block
-   size: 4096
+   size: block_size
    repeat: until
-   repeat-until: _io.size - _io.pos < 4096
+   repeat-until: _io.size - _io.pos < block_size
+instances:
+  block_size:
+    value: 4096
 types:
 # meta structs
   block_header:
@@ -43,8 +46,6 @@ types:
             blocktypes::btree: btree
             blocktypes::checkpoint: checkpoint
             blocktypes::volumesuperblock: volumesuperblock
-      - id: padding
-        size: (4096 - _io.pos) % 4096
 
 # special files
   containersuperblock:
@@ -267,7 +268,7 @@ types:
         # size: header.key_length + 8
         type: key
       record:
-        pos: 4096 - header.data_offset - 40
+        pos: _root.block_size - header.data_offset - 40
         size: header.data_length
         type:
           switch-on: key.type
@@ -288,7 +289,7 @@ types:
             0xB: fixed_loc_key
             _: fixed_key
       record:
-        pos: 4096-header.data_offset-40
+        pos: _root.block_size - header.data_offset - 40
         type: 
           switch-on: _parent._parent.header.padding
           cases:
