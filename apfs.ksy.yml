@@ -29,8 +29,10 @@ types:
       - id: flags   
         type: u2
         doc: 0x4000 block_id = position, 0x8000 = container
-      - id: padding 
-        type: u4
+      - id: var_type 
+        type: u2
+      - id: padding
+        type: u2
   block: 
     seq:
       - id: header
@@ -283,7 +285,7 @@ types:
       key:
         pos: header.key_offset + _parent.keys_offset + 56
         type: 
-          switch-on: _parent._parent.header.padding
+          switch-on: _parent._parent.header.var_type
           cases:
             0x9: fixed_key_9
             0xB: fixed_loc_key
@@ -291,7 +293,7 @@ types:
       record:
         pos: _root.block_size - header.data_offset - 40
         type: 
-          switch-on: _parent._parent.header.padding
+          switch-on: _parent._parent.header.var_type
           cases:
             0x9: fixed_data_9
             0xB: fixed_loc_data
