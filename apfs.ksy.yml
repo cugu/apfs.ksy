@@ -1,6 +1,7 @@
 meta:
   id: apfs
   endian: le
+  license: MIT
 seq:
  - id: blocks
    type: block
