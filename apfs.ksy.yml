@@ -145,6 +145,7 @@ types:
           cases:
             entry_type::name: flex_named_record
             entry_type::thread: flex_thread_record
+            entry_type::extent: flex_extent_record
 
   fixed_entry:
     seq:
@@ -264,15 +265,9 @@ types:
         type: u8
       - id: timestamp
         type: u8
-      - id: unknown_16
+      - id: item_type
         type: u2
-
-  location_record:
-    seq:
-      - id: foo
-        type: u8
-      - id: block_offset
-        type: u8
+        enum: item_type
 
   flex_thread_record:
     seq:
@@ -301,6 +296,13 @@ types:
         doc: size = name_length if in UTF-8 chars not byte
       - id: padding
         size-eos: true
+
+  flex_extent_record:
+    seq:
+      - id: size
+        type: u8
+      - id: block
+        type: u8
 
 # spaceman (type: 0x05)
 
@@ -463,7 +465,7 @@ enums:
     0x20000000: volume
     0x30000000: thread
     0x60000000: unknown
-    0x80000000: unknown2
+    0x80000000: extent
     0x90000000: name
 
   alignment_type:
@@ -477,3 +479,7 @@ enums:
     14: files
     15: unknown2
     16: unknown3
+
+  item_type:
+    4: folder
+    8: file
