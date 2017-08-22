@@ -47,7 +47,8 @@ types:
           switch-on: header.block_type
           cases:
             block_type::containersuperblock: containersuperblock
-            block_type::node: node
+            block_type::node_2: node
+            block_type::node_3: node
             block_type::spaceman: spaceman
             block_type::allocationinfofile: allocationinfofile
             block_type::btree: btree
@@ -121,31 +122,71 @@ types:
         type:
           switch-on: alignment_type
           cases:
-            alignment_type::flex: flex_entry
+            alignment_type::flex_1: flex_entry_1
+            alignment_type::flex_2: flex_entry_2
+            alignment_type::flex_3: flex_entry_3
             alignment_type::fixed: fixed_entry
         repeat: expr
         repeat-expr: entry_count
 
 ## node entries
 
-  flex_entry:
+  flex_entry_1:
     seq:
       - id: header
         type: entry_header
     instances:
       key:
         pos: header.key_offset + _parent.keys_offset + 56
-        # size: header.key_length + 8
-        type: flex_key
+        type: flex12_key
       record:
         pos: _root.block_size - header.data_offset - 40
+        id: block_id
+        type: u8
+
+  flex_entry_2:
+    seq:
+      - id: header
+        type: entry_header
+    instances:
+      key:
+        pos: header.key_offset + _parent.keys_offset + 56
+        type: flex12_key
+      record:
+        pos: _root.block_size - header.data_offset
+        # from here: same as flex3_entry
         size: header.data_length
         type:
           switch-on: key.entry_type
           cases:
             entry_type::name: flex_named_record
             entry_type::thread: flex_thread_record
+            entry_type::idpair: flex_idpair_record
+            entry_type::entry_60: flex_60_record
             entry_type::extent: flex_extent_record
+            entry_type::entry_c0: flex_c0_record
+
+  flex_entry_3:
+    seq:
+      - id: header
+        type: entry_header
+    instances:
+      key:
+        pos: header.key_offset + _parent.keys_offset + 56
+        type: flex3_key
+      record:
+        pos: _root.block_size - header.data_offset - 40
+        # from here: same as flex2_entry
+        size: header.data_length
+        type:
+          switch-on: key.entry_type
+          cases:
+            entry_type::name: flex_named_record
+            entry_type::thread: flex_thread_record
+            entry_type::idpair: flex_idpair_record
+            entry_type::entry_60: flex_60_record
+            entry_type::extent: flex_extent_record
+            entry_type::entry_c0: flex_c0_record
 
   fixed_entry:
     seq:
@@ -240,10 +281,79 @@ types:
         type:
           switch-on: entry_type
           cases:
-            entry_type::name: named_key
-            entry_type::location: location_key
+            entry_type::name: flex_named_key
+            entry_type::location: flex_location_key
 
-  named_key:
+  flex12_key:
+    seq:
+      - id: parent_id
+        type: u4
+      - id: type0
+        type: u1
+      - id: type1
+        type: u1
+      - id: type2
+        type: u1
+      - id: entry_type
+        type: u1
+        enum: entry_type
+      - id: content
+        type:
+          switch-on: entry_type
+          cases:
+            entry_type::name: flex_named_key2
+            entry_type::idpair: flex_idpair_key
+            entry_type::entry_40: flex_named_key
+            entry_type::extent: flex_extent_key
+
+  flex3_key:
+    seq:
+      - id: parent_id
+        type: u4
+      - id: type0
+        type: u1
+      - id: type1
+        type: u1
+      - id: type2
+        type: u1
+      - id: entry_type
+        type: u1
+        enum: entry_type
+      - id: content
+        type:
+          switch-on: entry_type
+          cases:
+            entry_type::name: flex_named_key
+            entry_type::location: flex_location_key
+
+  flex_idpair_key:
+    seq:
+      - id: id2
+        type: u4
+      - id: id3
+        type: u4
+
+  flex_extent_key:
+    seq:
+      - id: id2
+        type: u8
+
+  flex_named_key2:
+    seq:
+      - id: namelength
+        type: u1
+      - id: unknown_1
+        type: u1
+      - id: unknown_2
+        type: u1
+      - id: unknown_3
+        type: u1
+      - id: dirname
+        size: namelength
+        type: str
+        encoding: UTF-8
+
+  flex_named_key:
     seq:
       - id: name_length
         type: u2
@@ -252,24 +362,14 @@ types:
         type: str
         encoding: UTF-8
 
-  location_key:
+  flex_location_key:
     seq:
       - id: version
         type: u8
 
 ## node flex entry records
 
-  flex_named_record:
-    seq:
-      - id: node_id
-        type: u8
-      - id: timestamp
-        type: u8
-      - id: item_type
-        type: u2
-        enum: item_type
-
-  flex_thread_record:
+  flex_thread_record: # 0x30
     seq:
       - id: node_id
         type: u8
@@ -297,11 +397,42 @@ types:
       - id: padding
         size-eos: true
 
-  flex_extent_record:
+  flex_idpair_record: # 0x50
+    seq:
+      - id: node_id
+        type: u8
+      - id: namelength
+        type: u2
+      - id: dirname
+        size: namelength
+        type: str
+        encoding: UTF-8
+
+  flex_60_record: # 0x60
+    seq:
+      - id: unknown_0
+        type: u4
+
+  flex_extent_record: # 0x80
     seq:
       - id: size
         type: u8
       - id: block
+        type: u8
+
+  flex_named_record: # 0x90
+    seq:
+      - id: node_id
+        type: u8
+      - id: timestamp
+        type: u8
+      - id: item_type
+        type: u2
+        enum: item_type
+
+  flex_c0_record: # 0xc0
+    seq:
+      - id: unknown_0
         type: u8
 
 # spaceman (type: 0x05)
@@ -452,7 +583,8 @@ enums:
 
   block_type:
     1: containersuperblock
-    2: node
+    2: node_2
+    3: node_3
     5: spaceman
     7: allocationinfofile
     11: btree
@@ -461,15 +593,20 @@ enums:
     17: unknown
 
   entry_type:
-    0x00000000: location
-    0x20000000: volume
-    0x30000000: thread
-    0x60000000: unknown
-    0x80000000: extent
-    0x90000000: name
+    0x00: location
+    0x20: volume
+    0x30: thread
+    0x40: entry_40
+    0x50: idpair
+    0x60: entry_60
+    0x80: extent
+    0x90: name
+    0xc0: entry_c0
 
   alignment_type:
-    0x03: flex
+    0x01: flex_1
+    0x02: flex_2
+    0x03: flex_3
     0x07: fixed
 
   node_type:
