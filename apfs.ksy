@@ -629,3 +629,4 @@ enums:
   item_type:
     4: folder
     8: file
+    10: type_10
