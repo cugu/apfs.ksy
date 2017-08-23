@@ -379,8 +379,14 @@ types:
         type: u8
         repeat: expr
         repeat-expr: 4
-      - id: unknown_48
-        size: 32
+      - id: unk_48
+        type: u8
+      - id: unk_56
+        type: u8
+      - id: unk_64
+        type: u8
+      - id: unk_72
+        type: u8
       - id: access
         type: u8
       - id: unknown_88
@@ -389,6 +395,9 @@ types:
         type: u2
       - id: name_length
         type: u2
+      - id: name_filler
+        type: u4
+        if: unk_64 > 2
       - id: name
         type: str
         size-eos: true
