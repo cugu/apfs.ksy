@@ -399,8 +399,7 @@ types:
         type: u4
         if: unk_64 > 2
       - id: name
-        type: str
-        size-eos: true
+        type: strz
         encoding: UTF-8
         doc: size = name_length if in UTF-8 chars not byte
       - id: padding
@@ -582,8 +581,7 @@ types:
       - id: unknown_312
         size: 392
       - id: name
-        type: str
-        size: 8
+        type: strz
         encoding: UTF-8
 
 # enums
