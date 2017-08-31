@@ -122,7 +122,7 @@ types:
         type: u2
       - id: meta_entry
         type: entry_header
-      - id: entry_locations
+      - id: entries
         type:
           switch-on: alignment_type
           cases:
