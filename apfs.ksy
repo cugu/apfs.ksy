@@ -1,16 +1,20 @@
 meta:
   id: apfs
-  endian: le
   license: MIT
+  encoding: UTF-8
+  endian: le
+
 seq:
  - id: blocks
    type: block
    size: block_size
    repeat: until
    repeat-until: _io.size - _io.pos < block_size
+
 instances:
   block_size:
     value: 4096
+
 types:
 
 # meta structs
@@ -64,7 +68,7 @@ types:
         contents: [NXSB]
       - id: block_size
         type: u4
-      - id: block_count
+      - id: num_blocks
         type: u8
       - id: padding
         size: 16
@@ -90,12 +94,12 @@ types:
         type: u8
       - id: padding2
         type: u4
-      - id: volumesuperblock_ids_count
+      - id: num_volumesuperblock_ids
         type: u4
       - id: volumesuperblock_ids
         type: u8
         repeat: expr
-        repeat-expr: volumesuperblock_ids_count
+        repeat-expr: num_volumesuperblock_ids
 
 # node (type: 0x02)
 
@@ -106,19 +110,19 @@ types:
         enum: alignment_type
       - id: unknown_34
         type: u2
-      - id: entry_count
+      - id: num_entries
         type: u4
       - id: unknown_40
         type: u2
-      - id: keys_offset
+      - id: ofs_keys
         type: u2
-      - id: keys_size
+      - id: len_keys
         type: u2
-      - id: data_offset
+      - id: ofs_data
         type: u2
       - id: meta_entry
         type: entry_header
-      - id: entries
+      - id: entry_locations
         type:
           switch-on: alignment_type
           cases:
@@ -127,7 +131,7 @@ types:
             alignment_type::flex_3: flex_entry_3
             alignment_type::fixed: fixed_entry
         repeat: expr
-        repeat-expr: entry_count
+        repeat-expr: num_entries
 
 ## node entries
 
@@ -137,10 +141,10 @@ types:
         type: entry_header
     instances:
       key:
-        pos: header.key_offset + _parent.keys_offset + 56
+        pos: header.ofs_key + _parent.ofs_keys + 56
         type: flex12_key
       record:
-        pos: _root.block_size - header.data_offset - 40
+        pos: _root.block_size - header.ofs_data - 40
         id: block_id
         type: u8
 
@@ -150,12 +154,12 @@ types:
         type: entry_header
     instances:
       key:
-        pos: header.key_offset + _parent.keys_offset + 56
+        pos: header.ofs_key + _parent.ofs_keys + 56
         type: flex12_key
       record:
-        pos: _root.block_size - header.data_offset
+        pos: _root.block_size - header.ofs_data
         # from here: same as flex3_entry
-        size: header.data_length
+        size: header.len_data
         type:
           switch-on: key.entry_type
           cases:
@@ -172,12 +176,12 @@ types:
         type: entry_header
     instances:
       key:
-        pos: header.key_offset + _parent.keys_offset + 56
+        pos: header.ofs_key + _parent.ofs_keys + 56
         type: flex3_key
       record:
-        pos: _root.block_size - header.data_offset - 40
+        pos: _root.block_size - header.ofs_data - 40
         # from here: same as flex2_entry
-        size: header.data_length
+        size: header.len_data
         type:
           switch-on: key.entry_type
           cases:
@@ -194,7 +198,7 @@ types:
         type: fixed_entry_header
     instances:
       key:
-        pos: header.key_offset + _parent.keys_offset + 56
+        pos: header.ofs_key + _parent.ofs_keys + 56
         type:
           switch-on: _parent._parent.header.node_type
           cases:
@@ -202,7 +206,7 @@ types:
             node_type::location: fixed_loc_key
             _: fixed_default_key
       record:
-        pos: _root.block_size - header.data_offset - 40
+        pos: _root.block_size - header.ofs_data - 40
         type:
           switch-on: _parent._parent.header.node_type
           cases:
@@ -213,20 +217,20 @@ types:
 
   entry_header:
     seq:
-      - id: key_offset
+      - id: ofs_key
         type: s2
-      - id: key_length
+      - id: len_key
         type: u2
-      - id: data_offset
+      - id: ofs_data
         type: s2
-      - id: data_length
+      - id: len_data
         type: u2
 
   fixed_entry_header:
     seq:
-      - id: key_offset
+      - id: ofs_key
         type: s2
-      - id: data_offset
+      - id: ofs_data
         type: s2
 
 ## node fixed entry keys
@@ -337,16 +341,14 @@ types:
       - id: dirname
         size: namelength
         type: str
-        encoding: UTF-8
 
   flex_named_key:
     seq:
-      - id: name_length
+      - id: len_name
         type: u2
       - id: dirname
-        size: name_length
+        size: len_name
         type: str
-        encoding: UTF-8
 
   flex_location_key:
     seq:
@@ -379,15 +381,14 @@ types:
         type: u8
       - id: block_id
         type: u2
-      - id: name_length
+      - id: len_name
         type: u2
       - id: name_filler
         type: u4
         if: unk_64 > 2
       - id: name
         type: strz
-        encoding: UTF-8
-        doc: size = name_length if in UTF-8 chars not byte
+        doc: size = len_name if in UTF-8 chars not byte
       - id: padding
         size-eos: true
 
@@ -400,7 +401,6 @@ types:
       - id: dirname
         size: namelength
         type: str
-        encoding: UTF-8
 
   flex_60_record: # 0x60
     seq:
@@ -437,17 +437,17 @@ types:
         type: u4
       - id: unknown_36
         size: 12
-      - id: block_count
+      - id: num_blocks
         type: u8
       - id: unknown_56
         size: 8
-      - id: entry_count
+      - id: num_entries
         type: u4
       - id: unknown_68
         type: u4
-      - id: free_block_count
+      - id: num_free_blocks
         type: u8
-      - id: entries_offset
+      - id: ofs_entries
         type: u4
       - id: unknown_84
         size: 92
@@ -457,9 +457,9 @@ types:
         size: 200
     instances:
       allocationinfofile_blocks:
-        pos: entries_offset
+        pos: ofs_entries
         repeat: expr
-        repeat-expr: entry_count
+        repeat-expr: num_entries
         type: u8
 
 # allocation info file (type: 0x07)
@@ -468,12 +468,12 @@ types:
     seq:
       - id: unknown_32
         size: 4
-      - id: entry_count
+      - id: num_entries
         type: u4
       - id: entries
         type: allocationinfofile_entry
         repeat: expr
-        repeat-expr: entry_count
+        repeat-expr: num_entries
 
   allocationinfofile_entry:
     seq:
@@ -483,9 +483,9 @@ types:
         type: u4
       - id: unknown_12
         type: u4
-      - id: block_count
+      - id: num_blocks
         type: u4
-      - id: free_block_count
+      - id: num_free_blocks
         type: u4
       - id: allocationfile_block
         type: u8
@@ -505,12 +505,12 @@ types:
     seq:
       - id: unknown_0
         type: u4
-      - id: entry_count
+      - id: num_entries
         type: u4
       - id: entries
         type: checkpoint_entry
         repeat: expr
-        repeat-expr: entry_count
+        repeat-expr: num_entries
 
   checkpoint_entry:
     seq:
@@ -568,7 +568,6 @@ types:
         size: 392
       - id: name
         type: strz
-        encoding: UTF-8
 
 # enums
 
