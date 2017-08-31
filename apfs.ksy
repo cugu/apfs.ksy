@@ -270,20 +270,6 @@ types:
 
 ## node flex entry keys
 
-  flex_key:
-    seq:
-      - id: parent_id
-        type: u4
-      - id: entry_type
-        type: u4
-        enum: entry_type
-      - id: content
-        type:
-          switch-on: entry_type
-          cases:
-            entry_type::name: flex_named_key
-            entry_type::location: flex_location_key
-
   flex12_key:
     seq:
       - id: parent_id
