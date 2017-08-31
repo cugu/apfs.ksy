@@ -126,61 +126,30 @@ types:
         type:
           switch-on: alignment_type
           cases:
-            alignment_type::flex_1: flex_entry_1
-            alignment_type::flex_2: flex_entry_2
-            alignment_type::flex_3: flex_entry_3
+            alignment_type::flex_1: flex_entry
+            alignment_type::flex_2: flex_entry
+            alignment_type::flex_3: flex_entry
             alignment_type::fixed: fixed_entry
         repeat: expr
         repeat-expr: num_entries
 
 ## node entries
 
-  flex_entry_1:
+  flex_entry:
     seq:
       - id: header
         type: entry_header
     instances:
       key:
         pos: header.ofs_key + _parent.ofs_keys + 56
-        type: flex12_key
-      record:
-        pos: _root.block_size - header.ofs_data - 40
-        id: block_id
+        type: flex_key
+      block_id:
+        pos: _root.block_size - header.ofs_data - 40 * ((_parent.alignment_type != alignment_type::flex_2) ? 1 : 0)
+        if: _parent.alignment_type == alignment_type::flex_1
         type: u8
-
-  flex_entry_2:
-    seq:
-      - id: header
-        type: entry_header
-    instances:
-      key:
-        pos: header.ofs_key + _parent.ofs_keys + 56
-        type: flex12_key
       record:
-        pos: _root.block_size - header.ofs_data
-        # from here: same as flex3_entry
-        size: header.len_data
-        type:
-          switch-on: key.entry_type
-          cases:
-            entry_type::name: flex_named_record
-            entry_type::thread: flex_thread_record
-            entry_type::idpair: flex_idpair_record
-            entry_type::entry_60: flex_60_record
-            entry_type::extent: flex_extent_record
-            entry_type::entry_c0: flex_c0_record
-
-  flex_entry_3:
-    seq:
-      - id: header
-        type: entry_header
-    instances:
-      key:
-        pos: header.ofs_key + _parent.ofs_keys + 56
-        type: flex3_key
-      record:
-        pos: _root.block_size - header.ofs_data - 40
-        # from here: same as flex2_entry
+        pos: _root.block_size - header.ofs_data - 40 * ((_parent.alignment_type != alignment_type::flex_2) ? 1 : 0)
+        if: _parent.alignment_type != alignment_type::flex_1
         size: header.len_data
         type:
           switch-on: key.entry_type
@@ -274,29 +243,7 @@ types:
 
 ## node flex entry keys
 
-  flex12_key:
-    seq:
-      - id: parent_id
-        type: u4
-      - id: type0
-        type: u1
-      - id: type1
-        type: u1
-      - id: type2
-        type: u1
-      - id: entry_type
-        type: u1
-        enum: entry_type
-      - id: content
-        type:
-          switch-on: entry_type
-          cases:
-            entry_type::name: flex_named_key2
-            entry_type::idpair: flex_idpair_key
-            entry_type::entry_40: flex_named_key
-            entry_type::extent: flex_extent_key
-
-  flex3_key:
+  flex_key:
     seq:
       - id: parent_id
         type: u4
@@ -314,7 +261,23 @@ types:
           switch-on: entry_type
           cases:
             entry_type::name: flex_named_key
+            entry_type::idpair: flex_idpair_key
+            entry_type::extattr: flex_named_key
+            entry_type::extent: flex_extent_key
             entry_type::location: flex_location_key
+
+  flex_named_key:
+    seq:
+      - id: len_name
+        type: u1
+      - id: flag_1
+        type: u1
+      - id: unknown_2
+        type: u2
+        if: flag_1 != 0
+      - id: dirname
+        size: len_name
+        type: strz
 
   flex_idpair_key:
     seq:
@@ -327,28 +290,6 @@ types:
     seq:
       - id: id2
         type: u8
-
-  flex_named_key2:
-    seq:
-      - id: namelength
-        type: u1
-      - id: unknown_1
-        type: u1
-      - id: unknown_2
-        type: u1
-      - id: unknown_3
-        type: u1
-      - id: dirname
-        size: namelength
-        type: str
-
-  flex_named_key:
-    seq:
-      - id: len_name
-        type: u2
-      - id: dirname
-        size: len_name
-        type: str
 
   flex_location_key:
     seq:
@@ -388,8 +329,7 @@ types:
         if: unk_64 > 2
       - id: name
         type: strz
-        doc: size = len_name if in UTF-8 chars not byte
-      - id: padding
+      - id: unk_remainder
         size-eos: true
 
   flex_idpair_record: # 0x50
@@ -588,7 +528,7 @@ enums:
     0x00: location
     0x20: volume
     0x30: thread
-    0x40: entry_40
+    0x40: extattr
     0x50: idpair
     0x60: entry_60
     0x80: extent
