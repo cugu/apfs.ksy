@@ -47,6 +47,7 @@ types:
       - id: header
         type: block_header
       - id: body
+        size-eos: true
         type:
           switch-on: header.type_block
           cases:
@@ -58,6 +59,7 @@ types:
             block_type::btree: btree
             block_type::checkpoint: checkpoint
             block_type::volumesuperblock: volumesuperblock
+            
 
 # containersuperblock (type: 0x01)
 
@@ -169,14 +171,15 @@ types:
     instances:
       key:
         pos: header.ofs_key + _parent.ofs_keys + 56
+        size: _parent.meta_entry.len_key
         type:
           switch-on: _parent._parent.header.type_content
           cases:
             content_type::history: fixed_history_key
             content_type::location: fixed_loc_key
-            _: fixed_default_key
       record:
         pos: _root.block_size - header.ofs_data - 40
+        size: _parent.meta_entry.len_data
         type:
           switch-on: _parent._parent.header.type_content
           cases:
@@ -204,11 +207,6 @@ types:
         type: s2
 
 ## node fixed entry keys
-
-  fixed_default_key:
-    seq:
-      - id: unknown_0
-        size: 16
 
   fixed_loc_key:
     seq:
@@ -258,6 +256,7 @@ types:
         type: u1
         enum: entry_type
       - id: content
+        size: _parent.header.len_key
         type:
           switch-on: type_entry
           cases:
