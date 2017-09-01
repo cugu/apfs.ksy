@@ -146,11 +146,11 @@ types:
         pos: header.ofs_key + _parent.ofs_keys + 56
         type: flex_key
       block_id:
-        pos: _root.block_size - header.ofs_data - 40 * ((_parent.type_node != node_type::flex_2) ? 1 : 0)
+        pos: '_root.block_size - header.ofs_data - 40 * ((_parent.type_node != node_type::flex_2) ? 1 : 0)'
         if: _parent.type_node == node_type::flex_1
         type: u8
       record:
-        pos: _root.block_size - header.ofs_data - 40 * ((_parent.type_node != node_type::flex_2) ? 1 : 0)
+        pos: '_root.block_size - header.ofs_data - 40 * ((_parent.type_node != node_type::flex_2) ? 1 : 0)'
         if: _parent.type_node != node_type::flex_1
         size: header.len_data
         type:
