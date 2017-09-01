@@ -160,6 +160,7 @@ types:
             entry_type::entry_60: flex_60_record
             entry_type::extent: flex_extent_record
             entry_type::entry_c0: flex_c0_record
+            entry_type::extattr: flex_extattr_record
 
   fixed_entry:
     seq:
@@ -369,6 +370,15 @@ types:
       - id: unknown_0
         type: u8
 
+  flex_extattr_record: # 0x40
+    seq:
+      - id: type
+        type: u2
+      - id: len_data
+        type: u2
+      - id: data
+        size: len_data
+  
 # spaceman (type: 0x05)
 
   spaceman:
