@@ -30,15 +30,15 @@ types:
       - id: version
         type: u8
         doc: Incrementing number of the version of the block (highest == latest)
-      - id: block_type
+      - id: type_block
         type: u2
         enum: block_type
       - id: flags
         type: u2
         doc: 0x4000 block_id = position, 0x8000 = container
-      - id: node_type
+      - id: type_content
         type: u2
-        enum: node_type
+        enum: content_type
       - id: padding
         type: u2
 
@@ -47,8 +47,9 @@ types:
       - id: header
         type: block_header
       - id: body
+        size-eos: true
         type:
-          switch-on: header.block_type
+          switch-on: header.type_block
           cases:
             block_type::containersuperblock: containersuperblock
             block_type::node_2: node
@@ -58,6 +59,7 @@ types:
             block_type::btree: btree
             block_type::checkpoint: checkpoint
             block_type::volumesuperblock: volumesuperblock
+            
 
 # containersuperblock (type: 0x01)
 
@@ -105,9 +107,9 @@ types:
 
   node:
     seq:
-      - id: alignment_type
+      - id: type_node
         type: u2
-        enum: alignment_type
+        enum: node_type
       - id: unknown_34
         type: u2
       - id: num_entries
@@ -124,12 +126,12 @@ types:
         type: entry_header
       - id: entries
         type:
-          switch-on: alignment_type
+          switch-on: type_node
           cases:
-            alignment_type::flex_1: flex_entry
-            alignment_type::flex_2: flex_entry
-            alignment_type::flex_3: flex_entry
-            alignment_type::fixed: fixed_entry
+            node_type::flex_1: flex_entry
+            node_type::flex_2: flex_entry
+            node_type::flex_3: flex_entry
+            node_type::fixed: fixed_entry
         repeat: expr
         repeat-expr: num_entries
 
@@ -144,15 +146,15 @@ types:
         pos: header.ofs_key + _parent.ofs_keys + 56
         type: flex_key
       block_id:
-        pos: _root.block_size - header.ofs_data - 40 * ((_parent.alignment_type != alignment_type::flex_2) ? 1 : 0)
-        if: _parent.alignment_type == alignment_type::flex_1
+        pos: '_root.block_size - header.ofs_data - 40 * ((_parent.type_node != node_type::flex_2) ? 1 : 0)'
+        if: _parent.type_node == node_type::flex_1
         type: u8
       record:
-        pos: _root.block_size - header.ofs_data - 40 * ((_parent.alignment_type != alignment_type::flex_2) ? 1 : 0)
-        if: _parent.alignment_type != alignment_type::flex_1
+        pos: '_root.block_size - header.ofs_data - 40 * ((_parent.type_node != node_type::flex_2) ? 1 : 0)'
+        if: _parent.type_node != node_type::flex_1
         size: header.len_data
         type:
-          switch-on: key.entry_type
+          switch-on: key.type_entry
           cases:
             entry_type::name: flex_named_record
             entry_type::thread: flex_thread_record
@@ -169,19 +171,20 @@ types:
     instances:
       key:
         pos: header.ofs_key + _parent.ofs_keys + 56
+        size: _parent.meta_entry.len_key
         type:
-          switch-on: _parent._parent.header.node_type
+          switch-on: _parent._parent.header.type_content
           cases:
-            node_type::history: fixed_history_key
-            node_type::location: fixed_loc_key
-            _: fixed_default_key
+            content_type::history: fixed_history_key
+            content_type::location: fixed_loc_key
       record:
         pos: _root.block_size - header.ofs_data - 40
+        size: _parent.meta_entry.len_data
         type:
-          switch-on: _parent._parent.header.node_type
+          switch-on: _parent._parent.header.type_content
           cases:
-            node_type::history: fixed_history_record
-            node_type::location: fixed_loc_record
+            content_type::history: fixed_history_record
+            content_type::location: fixed_loc_record
 
 ## node entry header
 
@@ -204,11 +207,6 @@ types:
         type: s2
 
 ## node fixed entry keys
-
-  fixed_default_key:
-    seq:
-      - id: unknown_0
-        size: 16
 
   fixed_loc_key:
     seq:
@@ -254,12 +252,13 @@ types:
         type: u1
       - id: type2
         type: u1
-      - id: entry_type
+      - id: type_entry
         type: u1
         enum: entry_type
       - id: content
+        size: _parent.header.len_key
         type:
-          switch-on: entry_type
+          switch-on: type_entry
           cases:
             entry_type::name: flex_named_key
             entry_type::idpair: flex_idpair_key
@@ -361,7 +360,7 @@ types:
         type: u8
       - id: timestamp
         type: u8
-      - id: item_type
+      - id: type_item
         type: u2
         enum: item_type
 
@@ -372,13 +371,20 @@ types:
 
   flex_extattr_record: # 0x40
     seq:
-      - id: type
+      - id: type_ea
         type: u2
+        enum: ea_type
       - id: len_data
         type: u2
       - id: data
         size: len_data
-  
+        type:
+          switch-on: type_ea
+          cases:
+            ea_type::symlink: strz # symlink
+            # all remaining cases are handled as a "bunch of bytes", thanks to the "size" argument
+
+
 # spaceman (type: 0x05)
 
   spaceman:
@@ -464,14 +470,14 @@ types:
 
   checkpoint_entry:
     seq:
-      - id: block_type
+      - id: type_block
         type: u2
         enum: block_type
       - id: flags
         type: u2
-      - id: node_type
+      - id: type_content
         type: u4
-        enum: node_type
+        enum: content_type
       - id: block_size
         type: u4
       - id: unknown_52
@@ -545,13 +551,13 @@ enums:
     0x90: name
     0xc0: entry_c0
 
-  alignment_type:
+  node_type:
     0x01: flex_1
     0x02: flex_2
     0x03: flex_3
     0x07: fixed
 
-  node_type:
+  content_type:
     0: empty
     9: history
     11: location
@@ -563,3 +569,7 @@ enums:
     4: folder
     8: file
     10: type_10
+
+  ea_type:
+    2: generic
+    6: symlink
