@@ -47,7 +47,7 @@ types:
       - id: header
         type: block_header
       - id: body
-        size-eos: true
+        #size-eos: true
         type:
           switch-on: header.type_block
           cases:
@@ -171,7 +171,7 @@ types:
     instances:
       key:
         pos: header.ofs_key + _parent.ofs_keys + 56
-        size: _parent.meta_entry.len_key
+        #size: _parent.meta_entry.len_key
         type:
           switch-on: _parent._parent.header.type_content
           cases:
@@ -179,7 +179,7 @@ types:
             content_type::location: fixed_loc_key
       record:
         pos: _root.block_size - header.ofs_data - 40
-        size: _parent.meta_entry.len_data
+        #size: _parent.meta_entry.len_data
         type:
           switch-on: _parent._parent.header.type_content
           cases:
@@ -573,3 +573,4 @@ enums:
   ea_type:
     2: generic
     6: symlink
+    
