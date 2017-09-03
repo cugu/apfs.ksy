@@ -7,6 +7,14 @@ APFS filesystem format for Kaitai Struct (http://kaitai.io/)
 Blog post about the APFS format: https://blog.cugu.eu/post/apfs/
 
 The Kaitai WebIDE to examine APFS filesystems and to continue reverse engineering APFS: https://ide.kaitai.io/
+Add the following snippet after the meta section to the ksy file to parse all blocks
+
+    seq:
+     - id: blocks
+       type: block
+       size: block_size
+       repeat: until
+       repeat-until: _io.size - _io.pos < block_size
 
 Offical Apple Documentation an APFS: https://developer.apple.com/library/content/documentation/FileManagement/Conceptual/APFS_Guide/Introduction/Introduction.html
 
