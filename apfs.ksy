@@ -4,11 +4,9 @@ meta:
   encoding: UTF-8
   endian: le
 
-seq:
- - id: first_block
-   type: block
-
 instances:
+  b:
+    type: block
   block_size:
     value: 4096
 
