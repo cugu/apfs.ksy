@@ -4,13 +4,6 @@ meta:
   encoding: UTF-8
   endian: le
 
-seq:
- - id: blocks
-   type: block
-   size: block_size
-   repeat: until
-   repeat-until: _io.size - _io.pos < block_size
-
 instances:
   block_size:
     value: 4096
