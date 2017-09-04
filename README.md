@@ -18,13 +18,6 @@ Add the following snippet after the meta section to the ksy file to parse all bl
 
 Offical Apple Documentation an APFS: https://developer.apple.com/library/content/documentation/FileManagement/Conceptual/APFS_Guide/Introduction/Introduction.html
 
-## Images
-
-Name | Description | OS
-:--- | :---------- | :---
-test1.dd | New filesystem, one APFS volume, no files or folders. | macOS Sierra 10.12.3 (16D32)
-test3_head.dd | Non empty part of an 1GB image. Three volumes and a couple of files and folders. | macOS Sierra 10.12.3 (16D32)
-
 ## Contributing
 Pull requests and issues are welcome!
 
@@ -36,4 +29,4 @@ The free disk editor [iBored](http://apps.tempel.org/iBored) adds support for AP
 
 Get the latest beta (1.2b6 or higher) from here: http://files.tempel.org/iBored – note that these beta versions may contain support only for APFS, whereas the official (older) release supports many other formats (FAT, HFS etc.).
 
-To use iBored, drop a disk image file such as the provided .dd files into its window, or type shift+cmd+R to relaunch iBored with root permissions so that you can see the volumes of installed disks. Then double click it to see the first block in structured layout. 
+To use iBored, drop a disk image file such as the provided .dd files into its window, or type shift+cmd+R to relaunch iBored with root permissions so that you can see the volumes of installed disks. Then double click it to see the first block in structured layout.
