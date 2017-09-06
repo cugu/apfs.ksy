@@ -6,7 +6,9 @@ meta:
 
 instances:
   b:
-    type: block
+    pos: block_size * 0   # enter block number here to view that block
+    type: block           # opens a sub stream for making positioning inside the block work
+    size: block_size
   block_size:
     value: 4096
 
@@ -154,9 +156,9 @@ types:
             entry_type::name: flex_named_record
             entry_type::thread: flex_thread_record
             entry_type::idpair: flex_idpair_record
-            entry_type::entry_60: flex_60_record
+            entry_type::entry_6: flex_6_record
             entry_type::extent: flex_extent_record
-            entry_type::entry_c0: flex_c0_record
+            entry_type::entry_c: flex_c_record
             entry_type::extattr: flex_extattr_record
 
   fixed_entry:
@@ -239,17 +241,10 @@ types:
 
   flex_key:
     seq:
-      - id: parent_id
+      - id: id_low
         type: u4
-      - id: type0
-        type: u1
-      - id: type1
-        type: u1
-      - id: type2
-        type: u1
-      - id: type_entry
-        type: u1
-        enum: entry_type
+      - id: id_high
+        type: u4
       - id: content
         size: _parent.header.len_key
         type:
@@ -260,6 +255,14 @@ types:
             entry_type::extattr: flex_named_key
             entry_type::extent: flex_extent_key
             entry_type::location: flex_location_key
+    instances:
+      parent_id:
+        value: id_low + ((id_high & 0x0FFFFFFF) << 32)
+        -webide-parse-mode: eager
+      type_entry:
+        value: id_high >> 28
+        enum: entry_type
+        -webide-parse-mode: eager
 
   flex_named_key:
     seq:
@@ -337,7 +340,7 @@ types:
         size: namelength
         type: str
 
-  flex_60_record: # 0x60
+  flex_6_record: # 0x60
     seq:
       - id: unknown_0
         type: u4
@@ -359,7 +362,7 @@ types:
         type: u2
         enum: item_type
 
-  flex_c0_record: # 0xc0
+  flex_c_record: # 0xc0
     seq:
       - id: unknown_0
         type: u8
@@ -536,15 +539,15 @@ enums:
     17: unknown
 
   entry_type:
-    0x00: location
-    0x20: volume
-    0x30: thread
-    0x40: extattr
-    0x50: idpair
-    0x60: entry_60
-    0x80: extent
-    0x90: name
-    0xc0: entry_c0
+    0x0: location
+    0x2: volume
+    0x3: thread
+    0x4: extattr
+    0x5: idpair
+    0x6: entry_6
+    0x8: extent
+    0x9: name
+    0xc: entry_c
 
   node_type:
     0x01: flex_1
