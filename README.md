@@ -1,4 +1,7 @@
 # apfs.ksy
+
+![stability-experimental](https://img.shields.io/badge/stability-experimental-orange.svg)
+
 APFS filesystem format for Kaitai Struct (http://kaitai.io/)
 
 Blog post about the APFS format: https://blog.cugu.eu/post/apfs/
