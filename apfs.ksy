@@ -223,11 +223,11 @@ types:
 
   fixed_loc_record:
     seq:
-      - id: unknown_0
+      - id: block_start
         type: u4
-      - id: unknown_4
+      - id: block_length
         type: u4
-      - id: block
+      - id: block_num
         type: u8
 
   fixed_history_record:
