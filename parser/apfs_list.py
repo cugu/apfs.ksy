@@ -1,14 +1,10 @@
 """ List non-empty block in APFS file system """
 
 import sys
-import importlib.util
 from tabulate import tabulate
 from kaitaistruct import __version__ as ks_version, KaitaiStream, BytesIO
+import apfs
 
-
-SPEC = importlib.util.spec_from_file_location("apfs", "apfs.py")
-APFS = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(APFS)
 
 def get_block(idx, block_size, file_io):
     """ Get data of a single block """
@@ -20,7 +16,7 @@ def main():
     """ List non-empty block in APFS file system """
     with open(sys.argv[1], 'rb') as input_file:
         # get block_size
-        apfs = APFS.Apfs(KaitaiStream(input_file))
+        apfs = apfs.Apfs(KaitaiStream(input_file))
         block = apfs.Block(KaitaiStream(input_file), apfs, apfs)
         block_size = block.body.block_size
 

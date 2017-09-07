@@ -4,13 +4,10 @@ Parse an APFS and print a file tree
 
 from collections import defaultdict
 import argparse
-import importlib.util
 from anytree import Node, RenderTree
 from kaitaistruct import __version__ as ks_version, KaitaiStream, BytesIO
+import apfs
 
-SPEC = importlib.util.spec_from_file_location("apfs", "apfs.py")
-APFS = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(APFS)
 
 def list_extents(extent_entries, node_id):
     """ Get list of extents for given node_id """
@@ -133,7 +130,7 @@ class APFSParser:
             self.input_file = input_file
 
             # get blocksize
-            self.apfs = APFS.Apfs(KaitaiStream(input_file))
+            self.apfs = apfs.Apfs(KaitaiStream(input_file))
             block = self.apfs.Block(
                 KaitaiStream(input_file), self.apfs, self.apfs)
             self.blocksize = block.body.block_size
