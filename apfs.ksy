@@ -284,7 +284,7 @@ types:
 
   flex_extent_key:
     seq:
-      - id: id2
+      - id: offset # seek pos in file
         type: u8
 
   flex_location_key:
@@ -581,4 +581,3 @@ enums:
   ea_type:
     2: generic
     6: symlink
-    
