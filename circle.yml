@@ -16,8 +16,8 @@ dependencies:
 test:
   override:
     # lint files
-    - parser/pylint apfs_list.py
-    - parser/pylint apfs_parser.py
+    - pylint parser/apfs_list.py
+    - pylint parser/apfs_parser.py
 
     # compile ksy
     - kaitai-struct-compiler -t python apfs.ksy
