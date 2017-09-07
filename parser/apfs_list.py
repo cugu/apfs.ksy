@@ -16,8 +16,8 @@ def main():
     """ List non-empty block in APFS file system """
     with open(sys.argv[1], 'rb') as input_file:
         # get block_size
-        apfs = apfs.Apfs(KaitaiStream(input_file))
-        block = apfs.Block(KaitaiStream(input_file), apfs, apfs)
+        apfs_parser = apfs.Apfs(KaitaiStream(input_file))
+        block = apfs_parser.Block(KaitaiStream(input_file), apfs_parser, apfs_parser)
         block_size = block.body.block_size
 
         out = []
@@ -44,7 +44,7 @@ def main():
                 continue
             try:
                 # parse block
-                block = apfs.Block(KaitaiStream(BytesIO(data)), apfs, apfs)
+                block = apfs_parser.Block(KaitaiStream(BytesIO(data)), apfs_parser, apfs_parser)
 
                 column['block_id'] = block.header.block_id
                 column['version'] = block.header.version

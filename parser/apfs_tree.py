@@ -21,7 +21,7 @@ def list_extents(extent_entries, node_id):
         })
     return result
 
-class APFSParser:
+class APFSTree:
     """ Parse an APFS and print a file tree """
 
     apfs = None
@@ -165,4 +165,4 @@ class APFSParser:
 
 
 if __name__ == "__main__":
-    APFSParser()
+    APFSTree()
