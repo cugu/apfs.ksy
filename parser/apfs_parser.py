@@ -56,7 +56,7 @@ class APFSParser:
                     # we ignore these here as they only give us the IDs of other nodes,
                     # but we want the block numbers, which we'll get from the
                     # ContentType.location nodes in the else case below
-                    None
+                    pass
                 elif block.body.type_node == self.apfs.NodeType.fixed:
                     newblock = self.read_block(entry.record.block_num)
                     entries = self.get_entries(newblock)
@@ -65,7 +65,7 @@ class APFSParser:
                 else:
                     raise "unexpected"
             elif entry.key.type_entry.value == self.apfs.EntryType.extent.value:
-                extent_entries[entry.key.parent_id].append (entry)
+                extent_entries[entry.key.parent_id].append(entry)
             elif entry.key.type_entry.value == self.apfs.EntryType.name.value:
                 name_entries[entry.record.node_id] = entry
 
