@@ -6,7 +6,9 @@ meta:
 
 instances:
   b:
-    type: block
+    pos: block_size * 0   # enter block number here to view that block
+    type: block           # opens a sub stream for making positioning inside the block work
+    size: block_size
   block_size:
     value: 4096
 
@@ -47,8 +49,8 @@ types:
           switch-on: header.type_block
           cases:
             block_type::containersuperblock: containersuperblock
-            block_type::node_2: node
-            block_type::node_3: node
+            block_type::indexnode: node
+            block_type::leafnode: node
             block_type::spaceman: spaceman
             block_type::allocationinfofile: allocationinfofile
             block_type::btree: btree
@@ -153,10 +155,10 @@ types:
           cases:
             entry_type::name: flex_named_record
             entry_type::thread: flex_thread_record
-            entry_type::idpair: flex_idpair_record
-            entry_type::entry_60: flex_60_record
+            entry_type::hardlink: flex_hardlink_record
+            entry_type::entry_6: flex_6_record
             entry_type::extent: flex_extent_record
-            entry_type::entry_c0: flex_c0_record
+            entry_type::entry_c: flex_c_record
             entry_type::extattr: flex_extattr_record
 
   fixed_entry:
@@ -221,11 +223,11 @@ types:
 
   fixed_loc_record:
     seq:
-      - id: unknown_0
+      - id: block_start
         type: u4
-      - id: unknown_4
+      - id: block_length
         type: u4
-      - id: block
+      - id: block_num
         type: u8
 
   fixed_history_record:
@@ -239,27 +241,28 @@ types:
 
   flex_key:
     seq:
-      - id: parent_id
+      - id: id_low
         type: u4
-      - id: type0
-        type: u1
-      - id: type1
-        type: u1
-      - id: type2
-        type: u1
-      - id: type_entry
-        type: u1
-        enum: entry_type
+      - id: id_high
+        type: u4
       - id: content
         size: _parent.header.len_key
         type:
           switch-on: type_entry
           cases:
             entry_type::name: flex_named_key
-            entry_type::idpair: flex_idpair_key
+            entry_type::hardlink: flex_hardlink_key
             entry_type::extattr: flex_named_key
             entry_type::extent: flex_extent_key
             entry_type::location: flex_location_key
+    instances:
+      parent_id:
+        value: id_low + ((id_high & 0x0FFFFFFF) << 32)
+        -webide-parse-mode: eager
+      type_entry:
+        value: id_high >> 28
+        enum: entry_type
+        -webide-parse-mode: eager
 
   flex_named_key:
     seq:
@@ -274,16 +277,14 @@ types:
         size: len_name
         type: strz
 
-  flex_idpair_key:
+  flex_hardlink_key:
     seq:
       - id: id2
-        type: u4
-      - id: id3
-        type: u4
+        type: u8
 
   flex_extent_key:
     seq:
-      - id: id2
+      - id: offset # seek pos in file
         type: u8
 
   flex_location_key:
@@ -303,31 +304,41 @@ types:
         type: u8
         repeat: expr
         repeat-expr: 4
-      - id: unk_48
+      - id: flags
+        type: u4
+      - id: unknown_52
+        type: u4
+      - id: unknown_56
         type: u8
-      - id: unk_56
+      - id: unknown_64
         type: u8
-      - id: unk_64
-        type: u8
-      - id: unk_72
-        type: u8
+      - id: owner_id
+        type: u4
+      - id: group_id
+        type: u4
       - id: access
-        type: u8
+        type: u4
+      - id: unknown_84
+        type: u4
       - id: unknown_88
-        type: u8
-      - id: block_id
+        type: u4
+      - id: filler_flag
+        type: u2
+      - id: unknown_94
+        type: u2
+      - id: unknown_96
         type: u2
       - id: len_name
         type: u2
       - id: name_filler
         type: u4
-        if: unk_64 > 2
+        if: filler_flag == 2
       - id: name
         type: strz
-      - id: unk_remainder
+      - id: unknown_remainder
         size-eos: true
 
-  flex_idpair_record: # 0x50
+  flex_hardlink_record: # 0x50
     seq:
       - id: node_id
         type: u8
@@ -337,7 +348,7 @@ types:
         size: namelength
         type: str
 
-  flex_60_record: # 0x60
+  flex_6_record: # 0x60
     seq:
       - id: unknown_0
         type: u4
@@ -347,6 +358,8 @@ types:
       - id: size
         type: u8
       - id: block
+        type: u8
+      - id: unknown_16
         type: u8
 
   flex_named_record: # 0x90
@@ -359,7 +372,7 @@ types:
         type: u2
         enum: item_type
 
-  flex_c0_record: # 0xc0
+  flex_c_record: # 0xc0
     seq:
       - id: unknown_0
         type: u8
@@ -526,8 +539,8 @@ enums:
 
   block_type:
     1: containersuperblock
-    2: node_2
-    3: node_3
+    2: indexnode
+    3: leafnode
     5: spaceman
     7: allocationinfofile
     11: btree
@@ -536,15 +549,15 @@ enums:
     17: unknown
 
   entry_type:
-    0x00: location
-    0x20: volume
-    0x30: thread
-    0x40: extattr
-    0x50: idpair
-    0x60: entry_60
-    0x80: extent
-    0x90: name
-    0xc0: entry_c0
+    0x0: location
+    0x2: volume
+    0x3: thread
+    0x4: extattr
+    0x5: hardlink
+    0x6: entry_6
+    0x8: extent
+    0x9: name
+    0xc: entry_c
 
   node_type:
     0x01: flex_1
@@ -568,4 +581,3 @@ enums:
   ea_type:
     2: generic
     6: symlink
-    
