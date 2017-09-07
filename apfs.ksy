@@ -155,7 +155,7 @@ types:
           cases:
             entry_type::name: flex_named_record
             entry_type::thread: flex_thread_record
-            entry_type::idpair: flex_idpair_record
+            entry_type::hardlink: flex_hardlink_record
             entry_type::entry_6: flex_6_record
             entry_type::extent: flex_extent_record
             entry_type::entry_c: flex_c_record
@@ -251,7 +251,7 @@ types:
           switch-on: type_entry
           cases:
             entry_type::name: flex_named_key
-            entry_type::idpair: flex_idpair_key
+            entry_type::hardlink: flex_hardlink_key
             entry_type::extattr: flex_named_key
             entry_type::extent: flex_extent_key
             entry_type::location: flex_location_key
@@ -277,12 +277,10 @@ types:
         size: len_name
         type: strz
 
-  flex_idpair_key:
+  flex_hardlink_key:
     seq:
       - id: id2
-        type: u4
-      - id: id3
-        type: u4
+        type: u8
 
   flex_extent_key:
     seq:
@@ -306,31 +304,41 @@ types:
         type: u8
         repeat: expr
         repeat-expr: 4
-      - id: unk_48
+      - id: flags
+        type: u4
+      - id: unknown_52
+        type: u4
+      - id: unknown_56
         type: u8
-      - id: unk_56
+      - id: unknown_64
         type: u8
-      - id: unk_64
-        type: u8
-      - id: unk_72
-        type: u8
+      - id: owner_id
+        type: u4
+      - id: group_id
+        type: u4
       - id: access
-        type: u8
+        type: u4
+      - id: unknown_84
+        type: u4
       - id: unknown_88
-        type: u8
-      - id: block_id
+        type: u4
+      - id: filler_flag
+        type: u2
+      - id: unknown_94
+        type: u2
+      - id: unknown_96
         type: u2
       - id: len_name
         type: u2
       - id: name_filler
         type: u4
-        if: unk_64 > 2
+        if: filler_flag == 2
       - id: name
         type: strz
-      - id: unk_remainder
+      - id: unknown_remainder
         size-eos: true
 
-  flex_idpair_record: # 0x50
+  flex_hardlink_record: # 0x50
     seq:
       - id: node_id
         type: u8
@@ -350,6 +358,8 @@ types:
       - id: size
         type: u8
       - id: block
+        type: u8
+      - id: unknown_16
         type: u8
 
   flex_named_record: # 0x90
@@ -543,7 +553,7 @@ enums:
     0x2: volume
     0x3: thread
     0x4: extattr
-    0x5: idpair
+    0x5: hardlink
     0x6: entry_6
     0x8: extent
     0x9: name
