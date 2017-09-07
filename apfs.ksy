@@ -49,8 +49,8 @@ types:
           switch-on: header.type_block
           cases:
             block_type::containersuperblock: containersuperblock
-            block_type::node_2: node
-            block_type::node_3: node
+            block_type::indexnode: node
+            block_type::leafnode: node
             block_type::spaceman: spaceman
             block_type::allocationinfofile: allocationinfofile
             block_type::btree: btree
@@ -539,8 +539,8 @@ enums:
 
   block_type:
     1: containersuperblock
-    2: node_2
-    3: node_3
+    2: indexnode
+    3: leafnode
     5: spaceman
     7: allocationinfofile
     11: btree
