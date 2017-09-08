@@ -128,7 +128,9 @@ types:
             node_type::flex_1: flex_entry
             node_type::flex_2: flex_entry
             node_type::flex_3: flex_entry
-            node_type::fixed: fixed_entry
+            node_type::fixed_5: fixed_entry
+            node_type::fixed_6: fixed_entry
+            node_type::fixed_7: fixed_entry
         repeat: expr
         repeat-expr: num_entries
 
@@ -178,10 +180,12 @@ types:
         pos: _root.block_size - header.ofs_data - 40
         #size: _parent.meta_entry.len_data
         type:
-          switch-on: _parent._parent.header.type_content
+          switch-on: _parent._parent.header.type_content.to_i + (256 * _parent.type_node.to_i)
           cases:
-            content_type::history: fixed_history_record
-            content_type::location: fixed_loc_record
+            content_type::history.to_i: fixed_history_record
+            content_type::location.to_i + (256 * node_type::fixed_5.to_i): fixed5_loc_record
+            content_type::location.to_i + (256 * node_type::fixed_6.to_i): fixed6_loc_record
+            content_type::location.to_i + (256 * node_type::fixed_7.to_i): fixed7_loc_record
 
 ## node entry header
 
@@ -209,7 +213,7 @@ types:
     seq:
       - id: block_id
         type: u8
-      - id: unknown_8
+      - id: version
         type: u8
 
   fixed_history_key:
@@ -221,7 +225,7 @@ types:
 
 ## node fixed entry records
 
-  fixed_loc_record:
+  fixed7_loc_record:
     seq:
       - id: block_start
         type: u4
@@ -229,6 +233,22 @@ types:
         type: u4
       - id: block_num
         type: u8
+
+  fixed5_loc_record:
+    seq:
+      - id: block_num
+        type: u8
+
+  fixed6_loc_record:
+    seq:
+      - id: block_num
+        type: u8
+      - id: unk_ofs
+        type: u2
+      - id: unk_len
+        type: u2
+      - id: block_length
+        type: u4
 
   fixed_history_record:
     seq:
@@ -520,17 +540,18 @@ types:
         size: 80
       - id: volume_guid
         size: 16
-      - id: time_256
+      - id: time_updated
         type: u8
       - id: unknown_264
         type: u8
-      - id: unknown_272
+      - id: created_by
         size: 32
-      - id: time_304
+        type: strz
+      - id: time_created
         type: u8
       - id: unknown_312
         size: 392
-      - id: name
+      - id: volume_name
         type: strz
 
 # enums
@@ -563,7 +584,9 @@ enums:
     0x01: flex_1
     0x02: flex_2
     0x03: flex_3
-    0x07: fixed
+    0x05: fixed_5
+    0x06: fixed_6
+    0x07: fixed_7
 
   content_type:
     0: empty
