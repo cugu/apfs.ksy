@@ -1,0 +1,31 @@
+machine:
+  python:
+    version: 3.5.1
+
+dependencies:
+  override:
+    - pip install -r parser/requirements.txt
+    # get kaitai
+    - echo "deb https://dl.bintray.com/kaitai-io/debian jessie main" | sudo tee /etc/apt/sources.list.d/kaitai.list
+    - sudo apt-key adv --keyserver hkp://pool.sks-keyservers.net --recv 379CE192D401AB61
+    - sudo apt-get update
+    - sudo apt-get install kaitai-struct-compiler
+    # get pylint
+    - pip install pylint
+
+test:
+  override:
+    # compile ksy
+    - kaitai-struct-compiler -t python apfs.ksy
+    - mv apfs.py parser
+
+    # lint files
+    - pylint parser/apfs_list.py
+    - pylint parser/apfs_tree.py
+
+    # test runs
+    - python parser/apfs_list.py images/test2.dd
+    - python parser/apfs_tree.py images/test2.dd | grep -q text.txt
+    - python parser/apfs_tree.py images/test4.dd | grep -q root
+    - python parser/apfs_tree.py images/test5.dd | grep -q myfile
+    - python parser/apfs_tree.py images/test6.dd | grep -q myfile
