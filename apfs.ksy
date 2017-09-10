@@ -49,8 +49,8 @@ types:
           switch-on: header.type_block
           cases:
             block_type::containersuperblock: containersuperblock
-            block_type::indexnode: node
-            block_type::leafnode: node
+            block_type::node_2: node	# might indicate a root node
+            block_type::node_3: node
             block_type::spaceman: spaceman
             block_type::allocationinfofile: allocationinfofile
             block_type::btree: btree
@@ -107,8 +107,9 @@ types:
       - id: type_node
         type: u2
         enum: node_type
-      - id: unknown_34
+      - id: leaf_distance
         type: u2
+        doc: Zero for leaf nodes, > 0 for branch nodes
       - id: num_entries
         type: u4
       - id: unknown_40
@@ -125,9 +126,11 @@ types:
         type:
           switch-on: type_node
           cases:
+            node_type::flex_0: flex_entry
             node_type::flex_1: flex_entry
             node_type::flex_2: flex_entry
             node_type::flex_3: flex_entry
+            node_type::fixed_4: fixed_entry
             node_type::fixed_5: fixed_entry
             node_type::fixed_6: fixed_entry
             node_type::fixed_7: fixed_entry
@@ -145,12 +148,12 @@ types:
         pos: header.ofs_key + _parent.ofs_keys + 56
         type: flex_key
       block_id:
-        pos: '_root.block_size - header.ofs_data - 40 * ((_parent.type_node != node_type::flex_2) ? 1 : 0)'
-        if: _parent.type_node == node_type::flex_1
+        pos: '_root.block_size - header.ofs_data - 40 * (((_parent.type_node & 1) == 0) ? 1 : 0)'
+        if: _parent.type_node <= node_type::flex_1
         type: u8
       record:
-        pos: '_root.block_size - header.ofs_data - 40 * ((_parent.type_node != node_type::flex_2) ? 1 : 0)'
-        if: _parent.type_node != node_type::flex_1
+        pos: '_root.block_size - header.ofs_data - 40 * (((_parent.type_node & 1) == 0) ? 1 : 0)'
+        if: _parent.type_node > node_type::flex_1
         size: header.len_data
         type:
           switch-on: key.type_entry
@@ -176,6 +179,7 @@ types:
           cases:
             content_type::history: fixed_history_key
             content_type::location: fixed_loc_key
+            content_type::extents: extents_key
       record:
         pos: _root.block_size - header.ofs_data - 40
         #size: _parent.meta_entry.len_data
@@ -532,8 +536,9 @@ types:
         type: u8
       - id: root_dir_id
         type: u8
-      - id: unknown_144_id
+      - id: inode_map_block
         type: u8
+        doc: Btree (key: block number of a file extent, rec: extent size and file's inode)
       - id: unknown_152_id
         type: u8
       - id: unknown_160
@@ -560,8 +565,8 @@ enums:
 
   block_type:
     1: containersuperblock
-    2: indexnode
-    3: leafnode
+    2: node_2
+    3: node_3
     5: spaceman
     7: allocationinfofile
     11: btree
@@ -571,7 +576,7 @@ enums:
 
   entry_type:
     0x0: location
-    0x2: volume
+    0x2: inode # key: blocknum of file extent, rec: extent size and inode
     0x3: thread
     0x4: extattr
     0x5: hardlink
@@ -581,9 +586,11 @@ enums:
     0xc: entry_c
 
   node_type:
+    0x00: flex_0
     0x01: flex_1
     0x02: flex_2
     0x03: flex_3
+    0x04: fixed_4
     0x05: fixed_5
     0x06: fixed_6
     0x07: fixed_7
@@ -593,7 +600,7 @@ enums:
     9: history
     11: location
     14: files
-    15: unknown2
+    15: extents
     16: unknown3
 
   item_type:
