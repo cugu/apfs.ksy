@@ -49,7 +49,7 @@ types:
           switch-on: header.type_block
           cases:
             block_type::containersuperblock: containersuperblock
-            block_type::node_2: node	# might indicate a root node
+            block_type::node_2: node    # might indicate a root node
             block_type::node_3: node
             block_type::spaceman: spaceman
             block_type::allocationinfofile: allocationinfofile
@@ -104,9 +104,8 @@ types:
 
   node:
     seq:
-      - id: type_node
+      - id: type_flags
         type: u2
-        enum: node_type
       - id: leaf_distance
         type: u2
         doc: Zero for leaf nodes, > 0 for branch nodes
@@ -121,79 +120,13 @@ types:
       - id: ofs_data
         type: u2
       - id: meta_entry
-        type: entry_header
+        type: full_entry_header
       - id: entries
-        type:
-          switch-on: type_node
-          cases:
-            node_type::flex_0: flex_entry
-            node_type::flex_1: flex_entry
-            node_type::flex_2: flex_entry
-            node_type::flex_3: flex_entry
-            node_type::fixed_4: fixed_entry
-            node_type::fixed_5: fixed_entry
-            node_type::fixed_6: fixed_entry
-            node_type::fixed_7: fixed_entry
+        type: node_entry
         repeat: expr
         repeat-expr: num_entries
 
-## node entries
-
-  flex_entry:
-    seq:
-      - id: header
-        type: entry_header
-    instances:
-      key:
-        pos: header.ofs_key + _parent.ofs_keys + 56
-        type: flex_key
-      block_id:
-        pos: '_root.block_size - header.ofs_data - 40 * (((_parent.type_node & 1) == 0) ? 1 : 0)'
-        if: _parent.type_node <= node_type::flex_1
-        type: u8
-      record:
-        pos: '_root.block_size - header.ofs_data - 40 * (((_parent.type_node & 1) == 0) ? 1 : 0)'
-        if: _parent.type_node > node_type::flex_1
-        size: header.len_data
-        type:
-          switch-on: key.type_entry
-          cases:
-            entry_type::name: flex_named_record
-            entry_type::thread: flex_thread_record
-            entry_type::hardlink: flex_hardlink_record
-            entry_type::entry_6: flex_6_record
-            entry_type::extent: flex_extent_record
-            entry_type::entry_c: flex_c_record
-            entry_type::extattr: flex_extattr_record
-
-  fixed_entry:
-    seq:
-      - id: header
-        type: fixed_entry_header
-    instances:
-      key:
-        pos: header.ofs_key + _parent.ofs_keys + 56
-        #size: _parent.meta_entry.len_key
-        type:
-          switch-on: _parent._parent.header.type_content
-          cases:
-            content_type::history: fixed_history_key
-            content_type::location: fixed_loc_key
-            content_type::extents: extents_key
-      record:
-        pos: _root.block_size - header.ofs_data - 40
-        #size: _parent.meta_entry.len_data
-        type:
-          switch-on: _parent._parent.header.type_content.to_i + (256 * _parent.type_node.to_i)
-          cases:
-            content_type::history.to_i: fixed_history_record
-            content_type::location.to_i + (256 * node_type::fixed_5.to_i): fixed5_loc_record
-            content_type::location.to_i + (256 * node_type::fixed_6.to_i): fixed6_loc_record
-            content_type::location.to_i + (256 * node_type::fixed_7.to_i): fixed7_loc_record
-
-## node entry header
-
-  entry_header:
+  full_entry_header:
     seq:
       - id: ofs_key
         type: s2
@@ -204,14 +137,94 @@ types:
       - id: len_data
         type: u2
 
-  fixed_entry_header:
+  dynamic_entry_header:
     seq:
       - id: ofs_key
         type: s2
+      - id: len_key
+        type: u2
+        if: (_parent._parent.type_flags & 4) == 0
       - id: ofs_data
         type: s2
+      - id: len_data
+        type: u2
+        if: (_parent._parent.type_flags & 4) == 0
+
+## node entries
+
+  node_entry:
+    seq:
+      - id: header
+        type: dynamic_entry_header
+    instances:
+      key:
+        pos: header.ofs_key + _parent.ofs_keys + 56
+        type:
+          switch-on: (_parent.type_flags & 4)
+          cases:
+            0: flex_key
+            4: fixed_key
+        -webide-parse-mode: eager
+      rec:
+        pos: _root.block_size - header.ofs_data - 40 * (_parent.type_flags & 1)
+        type:
+          switch-on: (_parent.type_flags & 6)
+          cases:
+            0: rec_num
+            2: rec_flex
+            4: rec_num
+            6: rec_fix
+        -webide-parse-mode: eager
+    -webide-representation: '{key}: {rec}'
+
+  rec_num:
+    seq:
+      - id: n
+        type: u8
+    -webide-representation: '{n}'
+
+  rec_flex:
+    seq:
+      - id: content
+        size: _parent.header.len_data
+        type:
+          switch-on: _parent.key.as<flex_key>.type_entry
+          cases:
+            entry_type::name: flex_named_record
+            entry_type::thread: flex_thread_record
+            entry_type::hardlink: flex_hardlink_record
+            entry_type::entry_6: flex_6_record
+            entry_type::extent: flex_extent_record
+            entry_type::entry_c: flex_c_record
+            entry_type::extattr: flex_extattr_record
+        -webide-parse-mode: eager
+    -webide-representation: '{content}'
+
+  rec_fix:
+    seq:
+      - id: content
+        #size: _parent._parent._parent.meta_entry.len_data
+        type:
+          switch-on: _parent._parent._parent.header.type_content.to_i + (256 * _parent._parent.type_flags)
+          cases:
+            content_type::history.to_i: fixed_history_record
+            content_type::location.to_i + (256 * 5): fixed5_loc_record
+            content_type::location.to_i + (256 * 6): fixed6_loc_record
+            content_type::location.to_i + (256 * 7): fixed7_loc_record
+        -webide-parse-mode: eager
+    -webide-representation: '{content}'
 
 ## node fixed entry keys
+
+  fixed_key:
+    seq:
+      - id: key
+        type:
+          switch-on: _parent._parent._parent.header.type_content
+          cases:
+            content_type::history: fixed_history_key
+            content_type::location: fixed_loc_key
+    -webide-representation: '{key}'
 
   fixed_loc_key:
     seq:
@@ -219,13 +232,15 @@ types:
         type: u8
       - id: version
         type: u8
+    -webide-representation: 'ID {block_id} v{version}'
 
   fixed_history_key:
     seq:
       - id: version
         type: u8
-      - id: block
+      - id: block_num
         type: u8
+    -webide-representation: 'v{block_id} Blk {version}'
 
 ## node fixed entry records
 
@@ -237,11 +252,13 @@ types:
         type: u4
       - id: block_num
         type: u8
+    -webide-representation: 'Blk {block_num}, from {block_start}, len {block_length}'
 
   fixed5_loc_record:
     seq:
       - id: block_num
         type: u8
+    -webide-representation: 'Blk {block_num}'
 
   fixed6_loc_record:
     seq:
@@ -253,6 +270,7 @@ types:
         type: u2
       - id: block_length
         type: u4
+    -webide-representation: 'Blk {block_num}, len {block_length}'
 
   fixed_history_record:
     seq:
@@ -260,6 +278,7 @@ types:
         type: u4
       - id: unknown_4
         type: u4
+    -webide-representation: '{unknown_0}, {unknown_4}'
 
 ## node flex entry keys
 
@@ -270,7 +289,7 @@ types:
       - id: id_high
         type: u4
       - id: content
-        size: _parent.header.len_key
+        #size: _parent.header.len_key
         type:
           switch-on: type_entry
           cases:
@@ -287,6 +306,7 @@ types:
         value: id_high >> 28
         enum: entry_type
         -webide-parse-mode: eager
+    -webide-representation: '({type_entry}) {parent_id} {content}'
 
   flex_named_key:
     seq:
@@ -300,21 +320,25 @@ types:
       - id: dirname
         size: len_name
         type: strz
+    -webide-representation: '"{dirname}"'
 
   flex_hardlink_key:
     seq:
       - id: id2
         type: u8
+    -webide-representation: '#{id2}'
 
   flex_extent_key:
     seq:
       - id: offset # seek pos in file
         type: u8
+    -webide-representation: '{offset}'
 
   flex_location_key:
     seq:
       - id: version
         type: u8
+    -webide-representation: 'v{version}'
 
 ## node flex entry records
 
@@ -361,6 +385,7 @@ types:
         type: strz
       - id: unknown_remainder
         size-eos: true
+    -webide-representation: '#{node_id} / #{parent_id} "{name}"'
 
   flex_hardlink_record: # 0x50
     seq:
@@ -371,11 +396,13 @@ types:
       - id: dirname
         size: namelength
         type: str
+    -webide-representation: '#{node_id} "{dirname}"'
 
   flex_6_record: # 0x60
     seq:
       - id: unknown_0
         type: u4
+    -webide-representation: '{unknown_0}'
 
   flex_extent_record: # 0x80
     seq:
@@ -385,6 +412,7 @@ types:
         type: u8
       - id: unknown_16
         type: u8
+    -webide-representation: 'Blk {block}, Len {size}, {unknown_16}'
 
   flex_named_record: # 0x90
     seq:
@@ -395,11 +423,13 @@ types:
       - id: type_item
         type: u2
         enum: item_type
+    -webide-representation: '#{node_id}, {type_item}'
 
   flex_c_record: # 0xc0
     seq:
       - id: unknown_0
         type: u8
+    -webide-representation: '{unknown_0}'
 
   flex_extattr_record: # 0x40
     seq:
@@ -415,6 +445,7 @@ types:
           cases:
             ea_type::symlink: strz # symlink
             # all remaining cases are handled as a "bunch of bytes", thanks to the "size" argument
+    -webide-representation: '{type_ea} {data}'
 
 
 # spaceman (type: 0x05)
@@ -584,16 +615,6 @@ enums:
     0x8: extent
     0x9: name
     0xc: entry_c
-
-  node_type:
-    0x00: flex_0
-    0x01: flex_1
-    0x02: flex_2
-    0x03: flex_3
-    0x04: fixed_4
-    0x05: fixed_5
-    0x06: fixed_6
-    0x07: fixed_7
 
   content_type:
     0: empty
