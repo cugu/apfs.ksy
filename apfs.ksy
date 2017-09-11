@@ -569,7 +569,7 @@ types:
         type: u8
       - id: inode_map_block
         type: u8
-        doc: Btree (key: block number of a file extent, rec: extent size and file's inode)
+        doc: 'Btree (key: block number of a file extent, rec: extent size and file''s inode)'
       - id: unknown_152_id
         type: u8
       - id: unknown_160
