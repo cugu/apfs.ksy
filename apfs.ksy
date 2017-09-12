@@ -5,11 +5,9 @@ meta:
   endian: le
 
 seq:
- - id: blocks
-   type: block
-   size: block_size
-   repeat: until
-   repeat-until: _io.size - _io.pos < block_size
+  - id: containersuperblock
+    type: block
+    size: block_size
 
 instances:
   block_size:
@@ -88,20 +86,20 @@ types:
         type: u4
       - id: unknown_140
         size: 12
-      - id: spaceman_id
-        type: u8
-      - id: block_map_block
-        type: u8
+      - id: spaceman
+        type: ref_block
+      - id: block_map
+        type: ref_block
       - id: unknown_168_id
         type: u8
       - id: padding2
         type: u4
-      - id: num_volumesuperblock_ids
+      - id: num_volumesuperblocks
         type: u4
-      - id: volumesuperblock_ids
-        type: u8
+      - id: volumesuperblocks
+        type: ref_block
         repeat: expr
-        repeat-expr: num_volumesuperblock_ids
+        repeat-expr: num_volumesuperblocks
 
 # node (type: 0x02)
 
@@ -453,7 +451,7 @@ types:
       - id: unknown_0
         size: 16
       - id: root
-        type: u8
+        type: ref_block
 
 # checkpoint (type: 0x0c)
 
@@ -524,6 +522,21 @@ types:
         size: 392
       - id: name
         type: strz
+
+  ref_block:
+    doc: |
+      Universal type to address a block: it both parses one u8-sized
+      block address and provides a lazy instance to parse that block
+      right away.
+    seq:
+      - id: block
+        type: u8
+    instances:
+      body:
+        io: _root._io
+        pos: block * _root.block_size
+        type: block
+        size: _root.block_size
 
 # enums
 
