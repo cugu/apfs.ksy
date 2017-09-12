@@ -189,7 +189,7 @@ types:
         type:
           switch-on: '(((_parent.type_flags & 2) == 0) ? 256 : 0) + key.type_entry.to_i * (((_parent.type_flags & 2) == 0) ? 0 : 1)'
           cases:
-            256: u8 # applies to all pointer records, i.e. any entry data in index nodes
+            256: pointer_record # applies to all pointer records, i.e. any entry data in index nodes
             entry_type::location.to_i: locaction_record
             entry_type::inode.to_i: inode_record
             entry_type::name.to_i: named_record
@@ -280,6 +280,12 @@ types:
     -webide-representation: '{offset:dec}'
 
 ## node entry records
+
+  pointer_record: # for any index nodes
+    seq:
+      - id: pointer
+        type: u8
+    -webide-representation: '-> {pointer:dec}'
 
   history_record: # ???
     seq:
