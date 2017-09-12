@@ -170,18 +170,18 @@ types:
         type:
           switch-on: (_parent.type_flags & 6)
           cases:
-            0: rec_num
+            0: rec_ptr
             2: rec_flex
-            4: rec_num
+            4: rec_ptr
             6: rec_fix
         -webide-parse-mode: eager
     -webide-representation: '{key}: {rec}'
 
-  rec_num:
+  rec_ptr:
     seq:
-      - id: n
+      - id: pointer
         type: u8
-    -webide-representation: '{n}'
+    -webide-representation: '{pointer}'
 
   rec_flex:
     seq:
@@ -565,11 +565,12 @@ types:
         size: 92
       - id: block_map_block
         type: u8
+        doc: 'Maps node IDs to the inode Btree nodes'
       - id: root_dir_id
         type: u8
       - id: inode_map_block
         type: u8
-        doc: 'Btree (key: block number of a file extent, rec: extent size and file''s inode)'
+        doc: 'Maps file extents to inodes'
       - id: unknown_152_id
         type: u8
       - id: unknown_160
@@ -607,7 +608,7 @@ enums:
 
   entry_type:
     0x0: location
-    0x2: inode # key: blocknum of file extent, rec: extent size and inode
+    0x2: inode
     0x3: thread
     0x4: extattr
     0x5: hardlink
