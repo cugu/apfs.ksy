@@ -190,7 +190,7 @@ types:
           switch-on: '(((_parent.type_flags & 2) == 0) ? 256 : 0) + key.type_entry.to_i * (((_parent.type_flags & 2) == 0) ? 0 : 1)'
           cases:
             256: pointer_record # applies to all pointer records, i.e. any entry data in index nodes
-            entry_type::location.to_i: locaction_record
+            entry_type::location.to_i: location_record
             entry_type::inode.to_i: inode_record
             entry_type::name.to_i: named_record
             entry_type::thread.to_i: thread_record
@@ -295,7 +295,7 @@ types:
         type: u4
     -webide-representation: '{unknown_0}, {unknown_4}'
 
-  locaction_record: # 0x00
+  location_record: # 0x00
     seq:
       - id: block_start
         type: u4
