@@ -4,15 +4,38 @@ meta:
   encoding: UTF-8
   endian: le
 
+seq:
+  - id: block0
+    type: block
+    size: 4096
+
 instances:
-  b:
-    pos: 0 * block_size   # enter block number here to view that block
-    type: block           # opens a sub stream for making positioning inside the block work
-    size: block_size
   block_size:
-    value: 4096
+    value: _root.block0.body.as<containersuperblock>.block_size
+#  random_block:
+#    pos: 0 * block_size   # enter block number here to jump directly that block in the WebIDE
+#    type: block           # opens a sub stream for making positioning inside the block work
+#    size: block_size
 
 types:
+
+# block navigation
+
+  ref_block:
+    doc: |
+      Universal type to address a block: it both parses one u8-sized
+      block address and provides a lazy instance to parse that block
+      right away.
+    seq:
+      - id: block_num
+        type: u8
+    instances:
+      target:
+        io: _root._io
+        pos: block_num * _root.block_size
+        type: block
+        size: _root.block_size
+    -webide-representation: 'Blk {block_num:dec}'
 
 # meta structs
 
@@ -88,7 +111,7 @@ types:
       - id: spaceman_id
         type: u8
       - id: block_map_block
-        type: u8
+        type: ref_block
       - id: unknown_168_id
         type: u8
       - id: padding2
@@ -206,7 +229,7 @@ types:
         value: key_high >> 28
         enum: entry_type
         -webide-parse-mode: eager
-    -webide-representation: '({type_entry}) {key_value} {content}'
+    -webide-representation: '({type_entry}) {key_value:dec} {content}'
 
   location_key:
     seq:
@@ -214,21 +237,21 @@ types:
         type: u8
       - id: version
         type: u8
-    -webide-representation: 'ID {block_id} v{version}'
+    -webide-representation: 'ID {block_id:dec} v{version:dec}'
 
   history_key:
     seq:
       - id: version
         type: u8
       - id: block_num
-        type: u8
-    -webide-representation: 'v{block_id} Blk {version}'
+        type: ref_block
+    -webide-representation: '{block_num} v{version:dec}'
 
   inode_key:
     seq:
       - id: block_num
-        type: u8
-    -webide-representation: 'Blk {block_id}'
+        type: ref_block
+    -webide-representation: '{block_num}'
 
   named_key:
     seq:
@@ -248,13 +271,13 @@ types:
     seq:
       - id: id2
         type: u8
-    -webide-representation: '#{id2}'
+    -webide-representation: '#{id2:dec}'
 
   extent_key:
     seq:
       - id: offset # seek pos in file
         type: u8
-    -webide-representation: '{offset}'
+    -webide-representation: '{offset:dec}'
 
 ## node entry records
 
@@ -273,8 +296,8 @@ types:
       - id: block_length
         type: u4
       - id: block_num
-        type: u8
-    -webide-representation: 'Blk {block_num}, from {block_start}, len {block_length}'
+        type: ref_block
+    -webide-representation: '{block_num}, from {block_start:dec}, len {block_length:dec}'
 
   thread_record: # 0x30
     seq:
@@ -319,7 +342,7 @@ types:
         type: strz
       - id: unknown_remainder
         size-eos: true
-    -webide-representation: '#{node_id} / #{parent_id} "{name}"'
+    -webide-representation: '#{node_id:dec} / #{parent_id:dec} "{name}"'
 
   hardlink_record: # 0x50
     seq:
@@ -330,7 +353,7 @@ types:
       - id: dirname
         size: namelength
         type: str
-    -webide-representation: '#{node_id} "{dirname}"'
+    -webide-representation: '#{node_id:dec} "{dirname}"'
 
   t6_record: # 0x60
     seq:
@@ -350,17 +373,17 @@ types:
         type: u8
       - id: unknown_16
         type: u4
-    -webide-representation: 'iNode {inode}, Cnt {block_count} * {size}, {unknown_4}, {unknown_16}'
+    -webide-representation: '#{inode:dec}, Cnt {block_count:dec} * {block_size:dec}, {unknown_4:dec}, {unknown_16:dec}'
   
   extent_record: # 0x80
     seq:
       - id: size
         type: u8
-      - id: block
-        type: u8
+      - id: block_num
+        type: ref_block
       - id: unknown_16
         type: u8
-    -webide-representation: 'Blk {block}, Len {size}, {unknown_16}'
+    -webide-representation: '{block_num}, Len {size:dec}, {unknown_16:dec}'
 
   named_record: # 0x90
     seq:
@@ -371,13 +394,13 @@ types:
       - id: type_item
         type: u2
         enum: item_type
-    -webide-representation: '#{node_id}, {type_item}'
+    -webide-representation: '#{node_id:dec}, {type_item}'
 
   t12_record: # 0xc0
     seq:
       - id: unknown_0
         type: u8
-    -webide-representation: '{unknown_0}'
+    -webide-representation: '{unknown_0:dec}'
 
   extattr_record: # 0x40
     seq:
@@ -464,7 +487,7 @@ types:
       - id: unknown_0
         size: 16
       - id: root
-        type: u8
+        type: ref_block
 
 # checkpoint (type: 0x0c)
 
@@ -500,7 +523,7 @@ types:
       - id: block_id
         type: u8
       - id: block
-        type: u8
+        type: ref_block
 
 # volumesuperblock (type: 0x0d)
 
@@ -512,15 +535,15 @@ types:
       - id: unknown_36
         size: 92
       - id: block_map_block
-        type: u8
+        type: ref_block
         doc: 'Maps node IDs to the inode Btree nodes'
       - id: root_dir_id
         type: u8
       - id: inode_map_block
-        type: u8
+        type: ref_block
         doc: 'Maps file extents to inodes'
-      - id: unknown_152_id
-        type: u8
+      - id: unknown_152_blk
+        type: ref_block
       - id: unknown_160
         size: 80
       - id: volume_guid
