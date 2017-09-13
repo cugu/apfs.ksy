@@ -28,12 +28,11 @@ class APFSTree:
 
     apfs = None
     input_file = None
-    blocksize = 0
 
     def get_block(self, idx):
         """ Get data of a single block """
-        self.input_file.seek(idx * self.blocksize)
-        return self.input_file.read(self.blocksize)
+        self.input_file.seek(idx * self.apfs.block_size)
+        return self.input_file.read(self.apfs.block_size)
 
     def read_block(self, block_num):
         """ Parse a singe block """
@@ -49,14 +48,14 @@ class APFSTree:
         name_entries = {}
         extent_entries = defaultdict(list)
         for _, entry in enumerate(block.body.entries):
-            if block.header.type_block == self.apfs.BlockType.indexnode:
+            if block.header.type_block == self.apfs.BlockType.node:
                 # just follow the index blocks
                 if block.header.type_content == self.apfs.ContentType.files:
                     # we ignore these here as they only give us the IDs of other nodes,
                     # but we want the block numbers, which we'll get from the
                     # ContentType.location nodes in the else case below
                     pass
-                elif block.body.type_node == self.apfs.NodeType.fixed:
+                elif block.body.type_node == self.apfs.EntryType.extattr:
                     newblock = self.read_block(entry.record.block_num)
                     entries = self.get_entries(newblock)
                     name_entries.update(entries['name'])
@@ -98,16 +97,16 @@ class APFSTree:
         block_map = block.body.block_map_block  # mapping btree
         root_dir_id = block.body.root_dir_id  # root dir id
         if self.verbose:
-            vol_desc = "%s (volume, Mapping-Btree: %d, Rootdir-ID: %d" % (
-                block.body.name, block_map, root_dir_id)
+            vol_desc = "%s (volume, Mapping-Btree: %d, Rootdir-ID: %d)" % (
+                block.body.volume_name, block_map.value, root_dir_id)
         else:
-            vol_desc = block.body.name
+            vol_desc = block.body.volume_name
 
         # get volume btree
-        block = self.read_block(block_map)
+        block = self.read_block(block_map.value)
 
         # get root btree node and parse it with all its children, collecting dir entries
-        block = self.read_block(block.body.root)
+        block = self.read_block(block.body.root.value)
         entries = self.get_entries(block)
 
         # create a tree from the found dir entries
@@ -130,12 +129,7 @@ class APFSTree:
         with open(args.image, 'rb') as input_file:
 
             self.input_file = input_file
-
-            # get blocksize
             self.apfs = apfs.Apfs(KaitaiStream(input_file))
-            block = self.apfs.Block(
-                KaitaiStream(input_file), self.apfs, self.apfs)
-            self.blocksize = block.body.block_size
 
             # get containersuperblock
             containersuperblock = self.read_block(0)
@@ -144,16 +138,16 @@ class APFSTree:
             apfss = containersuperblock.body.volumesuperblock_ids
             block_map = containersuperblock.body.block_map_block
             if args.verbose:
-                print("Volume IDs: %s, Mapping-Btree: %d" % (apfss, block_map))
+                print("Volume IDs: %s, Mapping-Btree: %d" % (apfss, block_map.value))
 
             # get root of btree TODO: btree might be larger...
-            block = self.read_block(block_map)
+            block = self.read_block(block_map.value)
 
             # get leaf node
             apfs_locations = {}
-            block = self.read_block(block.body.root)
+            block = self.read_block(block.body.root.value)
             for _, entry in enumerate(block.body.entries):
-                apfs_locations[entry.key.block_id] = entry.record.block_num
+                apfs_locations[entry.key.key_value] = entry.data.block_num.value
             if args.verbose:
                 print("Volume Blocks:", apfs_locations, "\n")
 
