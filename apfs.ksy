@@ -605,7 +605,7 @@ enums:
   item_type:
     4: folder
     8: file
-    10: type_10
+    10: symlink
 
   ea_type:
     2: generic
