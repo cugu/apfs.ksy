@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 Parse an APFS and print a file tree
 """
