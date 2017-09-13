@@ -567,21 +567,6 @@ types:
       - id: volume_name
         type: strz
 
-  ref_block:
-    doc: |
-      Universal type to address a block: it both parses one u8-sized
-      block address and provides a lazy instance to parse that block
-      right away.
-    seq:
-      - id: block
-        type: u8
-    instances:
-      body:
-        io: _root._io
-        pos: block * _root.block_size
-        type: block
-        size: _root.block_size
-
 # enums
 
 enums:
