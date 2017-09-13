@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """ List non-empty block in APFS file system """
 
 import sys
