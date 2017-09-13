@@ -5,13 +5,12 @@ meta:
   endian: le
 
 seq:
-  - id: block0
-    type: block
+  - id: containersuperblock
     size: 4096
 
 instances:
   block_size:
-    value: _root.block0.body.as<containersuperblock>.block_size
+    value: _root.containersuperblock.body.as<containersuperblock>.block_size
 #  random_block:
 #    pos: 0 * block_size   # enter block number here to jump directly that block in the WebIDE
 #    type: block           # opens a sub stream for making positioning inside the block work
@@ -110,18 +109,18 @@ types:
         size: 12
       - id: spaceman_id
         type: u8
-      - id: block_map_block
+      - id: block_map
         type: ref_block
       - id: unknown_168_id
         type: u8
       - id: padding2
         type: u4
-      - id: num_volumesuperblock_ids
+      - id: num_volumesuperblocks
         type: u4
-      - id: volumesuperblock_ids
-        type: u8
+      - id: volumesuperblocks
+        type: ref_block
         repeat: expr
-        repeat-expr: num_volumesuperblock_ids
+        repeat-expr: num_volumesuperblocks
 
 # node (type: 0x02)
 
