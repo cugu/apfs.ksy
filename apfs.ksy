@@ -27,15 +27,15 @@ types:
       block address and provides a lazy instance to parse that block
       right away.
     seq:
-      - id: block_num
+      - id: value
         type: u8
     instances:
       target:
         io: _root._io
-        pos: block_num * _root.block_size
+        pos: value * _root.block_size
         type: block
         size: _root.block_size
-    -webide-representation: 'Blk {block_num:dec}'
+    -webide-representation: 'Blk {value:dec}'
 
 # meta structs
 
