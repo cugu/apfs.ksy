@@ -307,28 +307,36 @@ types:
 
   thread_record: # 0x30
     seq:
-      - id: node_id
-        type: u8
       - id: parent_id
         type: u8
-      - id: timestamps
+      - id: node_id
         type: u8
-        repeat: expr
-        repeat-expr: 4
+      - id: creation_timestamp
+        type: u8
+      - id: modified_timestamp
+        type: u8
+      - id: changed_timestamp
+        type: u8
+      - id: accessed_timestamp
+        type: u8
       - id: flags
-        type: u4
-      - id: unknown_52
-        type: u4
-      - id: unknown_56
         type: u8
+      - id: nchildren_or_nlink
+        type: u4
+      - id: unknown_60
+        type: u4
       - id: unknown_64
-        type: u8
+        type: u4
+      - id: bsdflags
+        type: u4
       - id: owner_id
         type: u4
       - id: group_id
         type: u4
-      - id: access
-        type: u4
+      - id: mode
+        type: u2
+      - id: unknown_82
+        type: u2
       - id: unknown_84
         type: u4
       - id: unknown_88
