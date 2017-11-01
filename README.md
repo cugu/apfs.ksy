@@ -12,7 +12,7 @@ https://github.com/kaitai-io/kaitai_struct_webide/wiki/Features
 
 ## Documentation
 
-Information about the checksum calculation can be found in [checksum.md](checksum.md).
+Information about the checksum calculation can be found in [checksum.md](docs/checksum.md).
 
 ## More documentation on APFS
 

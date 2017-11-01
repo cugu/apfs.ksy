@@ -6,12 +6,17 @@ meta:
 
 seq:
   - id: block0
-    type: block
+    type: obj
     size: 4096
+  - id: blocks
+    type: obj
+    size: 4096
+    repeat: expr
+    repeat-expr: 2000
 
 instances:
   block_size:
-    value: _root.block0.body.as<containersuperblock>.block_size
+    value: _root.block0.body.as<container_superblock>.block_size
 #  random_block:
 #    pos: 0 * block_size   # enter block number here to jump directly that block in the WebIDE
 #    type: block           # opens a sub stream for making positioning inside the block work
@@ -21,7 +26,7 @@ types:
 
 # block navigation
 
-  ref_block:
+  ref_obj:
     doc: |
       Universal type to address a block: it both parses one u8-sized
       block address and provides a lazy instance to parse that block
@@ -33,145 +38,146 @@ types:
       target:
         io: _root._io
         pos: value * _root.block_size
-        type: block
+        type: obj
         size: _root.block_size
     -webide-representation: 'Blk {value:dec}'
 
 # meta structs
 
-  block_header:
+  obj_header:
     seq:
-      - id: checksum
+      - id: o_cksum
         type: u8
         doc: Flechters checksum, according to the docs.
-      - id: block_id
+      - id: o_oid
         type: u8
-        doc: ID of the block itself. Either the position of the block or an incrementing number starting at 1024.
+        doc: ID of the obj itself. Either the position of the obj or an incrementing number starting at 1024.
       - id: version
         type: u8
-        doc: Incrementing number of the version of the block (highest == latest)
-      - id: type_block
+        doc: Incrementing number of the version of the obj (highest == latest)
+      - id: o_type
         type: u2
-        enum: block_type
-      - id: flags
+        enum: obj_type
+      - id: o_flags
         type: u2
-        doc: 0x4000 block_id = position, 0x8000 = container
-      - id: type_content
+        doc: 0x4000 oid = position, 0x8000 = container
+      - id: o_subtype
         type: u2
-        enum: content_type
-      - id: padding
+        enum: obj_subtype
+      - id: pad
         type: u2
 
-  block:
+  obj:
     seq:
-      - id: header
-        type: block_header
+      - id: hdr
+        type: obj_header
       - id: body
         #size-eos: true
         type:
-          switch-on: header.type_block
+          switch-on: hdr.o_type
           cases:
-            block_type::containersuperblock: containersuperblock
-            block_type::rootnode: node
-            block_type::node: node
-            block_type::spaceman: spaceman
-            block_type::allocationinfofile: allocationinfofile
-            block_type::btree: btree
-            block_type::checkpoint: checkpoint
-            block_type::volumesuperblock: volumesuperblock
+            obj_type::container_superblock: container_superblock
+            obj_type::rootnode: node
+            obj_type::node: node
+            obj_type::space_manager: space_manager
+            obj_type::allocationinfofile: allocationinfofile
+            obj_type::btree: btree
+            obj_type::checkpoint: checkpoint
+            obj_type::volume_superblock: volume_superblock
+    -webide-representation: '{hdr.o_type}'
             
 
-# containersuperblock (type: 0x01)
+# container_superblock (type: 0x01)
 
-  containersuperblock:
+  container_superblock:
     seq:
       - id: magic
         size: 4
         contents: [NXSB]
       - id: block_size
         type: u4
-      - id: num_blocks
+      - id: block_count
         type: u8
-      - id: padding
+      - id: pad
         size: 16
       - id: unknown_64
         type: u8
       - id: guid
         size: 16
-      - id: next_free_block_id
+      - id: next_oid
         type: u8
       - id: next_version
         type: u8
       - id: unknown_104
         size: 32
-      - id: previous_containersuperblock_block
+      - id: previous_container_superblock_block
         type: u4
       - id: unknown_140
         size: 12
-      - id: spaceman_id
+      - id: space_manager_id
         type: u8
-      - id: block_map_block
-        type: ref_block
+      - id: object_map_block
+        type: ref_obj
       - id: unknown_168_id
         type: u8
-      - id: padding2
+      - id: pad2
         type: u4
-      - id: num_volumesuperblock_ids
+      - id: volume_superblock_id_count
         type: u4
-      - id: volumesuperblock_ids
+      - id: volume_superblock_ids
         type: u8
         repeat: expr
-        repeat-expr: num_volumesuperblock_ids
+        repeat-expr: volume_superblock_id_count
 
 # node (type: 0x02)
 
   node:
     seq:
-      - id: type_flags
+      - id: node_type
         type: u2
-      - id: leaf_distance
+      - id: level
         type: u2
         doc: Zero for leaf nodes, > 0 for branch nodes
-      - id: num_entries
+      - id: entry_count
         type: u4
       - id: unknown_40
         type: u2
-      - id: ofs_keys
+      - id: keys_offset
         type: u2
-      - id: len_keys
+      - id: keys_length
         type: u2
-      - id: ofs_data
+      - id: data_offset
         type: u2
       - id: meta_entry
         type: full_entry_header
       - id: entries
         type: node_entry
         repeat: expr
-        repeat-expr: num_entries
+        repeat-expr: entry_count
 
   full_entry_header:
     seq:
-      - id: ofs_key
+      - id: key_offset
         type: s2
-      - id: len_key
+      - id: key_length
         type: u2
-      - id: ofs_data
+      - id: data_offset
         type: s2
-      - id: len_data
+      - id: data_length
         type: u2
 
   dynamic_entry_header:
     seq:
-      - id: ofs_key
+      - id: key_offset
         type: s2
-      - id: len_key
+      - id: key_length
         type: u2
-        if: (_parent._parent.type_flags & 4) == 0
-      - id: ofs_data
+        if: (_parent._parent.node_type & 4) == 0
+      - id: data_offset
         type: s2
-      - id: len_data
+      - id: data_length
         type: u2
-        if: (_parent._parent.type_flags & 4) == 0
+        if: (_parent._parent.node_type & 4) == 0
 
 ## node entries
 
@@ -181,26 +187,26 @@ types:
         type: dynamic_entry_header
     instances:
       key:
-        pos: header.ofs_key + _parent.ofs_keys + 56
+        pos: header.key_offset + _parent.keys_offset + 56
         type: key
         -webide-parse-mode: eager
-      data:
-        pos: _root.block_size - header.ofs_data - 40 * (_parent.type_flags & 1)
+      val:
+        pos: _root.block_size - header.data_offset - 40 * (_parent.node_type & 1)
         type:
-          switch-on: '(((_parent.type_flags & 2) == 0) ? 256 : 0) + key.type_entry.to_i * (((_parent.type_flags & 2) == 0) ? 0 : 1)'
+          switch-on: '(((_parent.node_type & 2) == 0) ? 256 : 0) + key.record_type.to_i * (((_parent.node_type & 2) == 0) ? 0 : 1)'
           cases:
-            256: pointer_record # applies to all pointer records, i.e. any entry data in index nodes
-            entry_type::location.to_i: location_record
-            entry_type::inode.to_i: inode_record
-            entry_type::name.to_i: named_record
-            entry_type::thread.to_i: thread_record
-            entry_type::hardlink.to_i: hardlink_record
-            entry_type::entry6.to_i: t6_record
-            entry_type::extent.to_i: extent_record
-            entry_type::entry12.to_i: t12_record
-            entry_type::extattr.to_i: extattr_record
+            256: pointer_record # applies to all pointer records, i.e. any entry val in index nodes
+            record_type::location.to_i: location_record
+            record_type::inode.to_i: inode_record
+            record_type::name.to_i: named_record
+            record_type::thread.to_i: thread_record
+            record_type::hardlink.to_i: hardlink_record
+            record_type::entry6.to_i: t6_record
+            record_type::extent.to_i: extent_record
+            record_type::entry12.to_i: t12_record
+            record_type::extattr.to_i: extattr_record
         -webide-parse-mode: eager
-    -webide-representation: '{key}: {data}'
+    -webide-representation: '{key}: {val}'
 
 ## node entry keys
 
@@ -211,51 +217,51 @@ types:
       - id: key_high
         type: u4
       - id: content
-        #size: _parent.header.len_key-8
+        #size: _parent.header.key-8_length
         type:
-          switch-on: type_entry
+          switch-on: record_type
           cases:
-            entry_type::location: location_key
-            entry_type::inode: inode_key
-            entry_type::name: named_key
-            entry_type::hardlink: hardlink_key
-            entry_type::extattr: named_key
-            entry_type::extent: extent_key
+            record_type::location: location_key
+            record_type::inode: inode_key
+            record_type::name: named_key
+            record_type::hardlink: hardlink_key
+            record_type::extattr: named_key
+            record_type::extent: extent_key
     instances:
       key_value:
         value: key_low + ((key_high & 0x0FFFFFFF) << 32)
         -webide-parse-mode: eager
-      type_entry:
+      record_type:
         value: key_high >> 28
-        enum: entry_type
+        enum: record_type
         -webide-parse-mode: eager
-    -webide-representation: '({type_entry}) {key_value:dec} {content}'
+    -webide-representation: '({record_type}) {key_value:dec} {content}'
 
   location_key:
     seq:
-      - id: block_id
+      - id: oid
         type: u8
       - id: version
         type: u8
-    -webide-representation: 'ID {block_id:dec} v{version:dec}'
+    -webide-representation: 'ID {oid:dec} v{version:dec}'
 
   history_key:
     seq:
       - id: version
         type: u8
-      - id: block_num
-        type: ref_block
-    -webide-representation: '{block_num} v{version:dec}'
+      - id: obj_id
+        type: ref_obj
+    -webide-representation: '{obj_id} v{version:dec}'
 
   inode_key:
     seq:
-      - id: block_num
-        type: ref_block
-    -webide-representation: '{block_num}'
+      - id: obj_id
+        type: ref_obj
+    -webide-representation: '{obj_id}'
 
   named_key:
     seq:
-      - id: len_name
+      - id: name_length
         type: u1
       - id: flag_1
         type: u1
@@ -263,7 +269,7 @@ types:
         type: u2
         if: flag_1 != 0
       - id: dirname
-        size: len_name
+        size: name_length
         type: strz
     -webide-representation: '"{dirname}"'
 
@@ -301,9 +307,9 @@ types:
         type: u4
       - id: block_length
         type: u4
-      - id: block_num
-        type: ref_block
-    -webide-representation: '{block_num}, from {block_start:dec}, len {block_length:dec}'
+      - id: obj_id
+        type: ref_obj
+    -webide-representation: '{obj_id}, from {block_start:dec}, len {block_length:dec}'
 
   thread_record: # 0x30
     seq:
@@ -347,7 +353,7 @@ types:
         type: u2
       - id: unknown_96
         type: u2
-      - id: len_name
+      - id: name_length
         type: u2
       - id: name_filler
         type: u4
@@ -393,11 +399,11 @@ types:
     seq:
       - id: size
         type: u8
-      - id: block_num
-        type: ref_block
+      - id: obj_id
+        type: ref_obj
       - id: unknown_16
         type: u8
-    -webide-representation: '{block_num}, Len {size:dec}, {unknown_16:dec}'
+    -webide-representation: '{obj_id}, Len {size:dec}, {unknown_16:dec}'
 
   named_record: # 0x90
     seq:
@@ -405,10 +411,10 @@ types:
         type: u8
       - id: timestamp
         type: u8
-      - id: type_item
+      - id: item_length
         type: u2
         enum: item_type
-    -webide-representation: '#{node_id:dec}, {type_item}'
+    -webide-representation: '#{node_id:dec}, {item_type}'
 
   t12_record: # 0xc0
     seq:
@@ -418,40 +424,40 @@ types:
 
   extattr_record: # 0x40
     seq:
-      - id: type_ea
+      - id: ea_type
         type: u2
         enum: ea_type
-      - id: len_data
+      - id: data_length
         type: u2
       - id: data
-        size: len_data
+        size: data_length
         type:
-          switch-on: type_ea
+          switch-on: ea_type
           cases:
             ea_type::symlink: strz # symlink
             # all remaining cases are handled as a "bunch of bytes", thanks to the "size" argument
-    -webide-representation: '{type_ea} {data}'
+    -webide-representation: '{ea_type} {data}'
 
 
-# spaceman (type: 0x05)
+# space_manager (type: 0x05)
 
-  spaceman:
+  space_manager:
     seq:
       - id: block_size
         type: u4
       - id: unknown_36
         size: 12
-      - id: num_blocks
+      - id: block_count
         type: u8
       - id: unknown_56
         size: 8
-      - id: num_entries
+      - id: entry_count
         type: u4
       - id: unknown_68
         type: u4
-      - id: num_free_blocks
+      - id: free_block_count
         type: u8
-      - id: ofs_entries
+      - id: entries_offset
         type: u4
       - id: unknown_84
         size: 92
@@ -461,9 +467,9 @@ types:
         size: 200
     instances:
       allocationinfofile_blocks:
-        pos: ofs_entries
+        pos: entries_offset
         repeat: expr
-        repeat-expr: num_entries
+        repeat-expr: entry_count
         type: u8
 
 # allocation info file (type: 0x07)
@@ -472,12 +478,12 @@ types:
     seq:
       - id: unknown_32
         size: 4
-      - id: num_entries
+      - id: entry_count
         type: u4
       - id: entries
         type: allocationinfofile_entry
         repeat: expr
-        repeat-expr: num_entries
+        repeat-expr: entry_count
 
   allocationinfofile_entry:
     seq:
@@ -487,9 +493,9 @@ types:
         type: u4
       - id: unknown_12
         type: u4
-      - id: num_blocks
+      - id: block_count
         type: u4
-      - id: num_free_blocks
+      - id: free_block_count
         type: u4
       - id: allocationfile_block
         type: u8
@@ -501,7 +507,7 @@ types:
       - id: unknown_0
         size: 16
       - id: root
-        type: ref_block
+        type: ref_obj
 
 # checkpoint (type: 0x0c)
 
@@ -509,23 +515,23 @@ types:
     seq:
       - id: unknown_0
         type: u4
-      - id: num_entries
+      - id: entry_count
         type: u4
       - id: entries
         type: checkpoint_entry
         repeat: expr
-        repeat-expr: num_entries
+        repeat-expr: entry_count
 
   checkpoint_entry:
     seq:
-      - id: type_block
+      - id: o_type
         type: u2
-        enum: block_type
+        enum: obj_type
       - id: flags
         type: u2
-      - id: type_content
+      - id: obj_subtype
         type: u4
-        enum: content_type
+        enum: obj_subtype
       - id: block_size
         type: u4
       - id: unknown_52
@@ -534,30 +540,30 @@ types:
         type: u4
       - id: unknown_60
         type: u4
-      - id: block_id
+      - id: oid
         type: u8
-      - id: block
-        type: ref_block
+      - id: object
+        type: ref_obj
 
-# volumesuperblock (type: 0x0d)
+# volume_superblock (type: 0x0d)
 
-  volumesuperblock:
+  volume_superblock:
     seq:
       - id: magic
         size: 4
         contents: [APSB]
       - id: unknown_36
         size: 92
-      - id: block_map_block
-        type: ref_block
+      - id: object_map_block
+        type: ref_obj
         doc: 'Maps node IDs to the inode Btree nodes'
       - id: root_dir_id
         type: u8
       - id: inode_map_block
-        type: ref_block
+        type: ref_obj
         doc: 'Maps file extents to inodes'
       - id: unknown_152_blk
-        type: ref_block
+        type: ref_obj
       - id: unknown_160
         size: 80
       - id: volume_guid
@@ -580,18 +586,18 @@ types:
 
 enums:
 
-  block_type:
-    1: containersuperblock
+  obj_type:
+    1: container_superblock
     2: rootnode
     3: node
-    5: spaceman
+    5: space_manager
     7: allocationinfofile
     11: btree
     12: checkpoint
-    13: volumesuperblock
+    13: volume_superblock
     17: unknown
 
-  entry_type:
+  record_type:
     0x0: location
     0x2: inode
     0x3: thread
@@ -602,7 +608,7 @@ enums:
     0x9: name
     0xc: entry12
 
-  content_type:
+  obj_subtype:
     0: empty
     9: history
     11: location
