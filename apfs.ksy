@@ -215,7 +215,7 @@ types:
       val:
         pos: _root.block_size - data_offset - 40 * (_parent.node_type & 1)
         type:
-          switch-on: '(((_parent.node_type & 2) == 0) ? 256 : 0) + key_hdr.kind.to_i * (((_parent.node_type & 2) == 0) ? 0 : 1)'
+          switch-on: '(_parent.level > 0) ? 256 : key_hdr.kind.to_i'
           cases:
             256: pointer_val # applies to all pointer vals, i.e. any entry val in index nodes
             kind::omap.to_i: omap_val
