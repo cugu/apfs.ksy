@@ -387,6 +387,14 @@ types:
     seq:
       - id: size
         type: u8
+      - id: stored_size
+        type: u8
+      - id: unknown_16
+        type: u8
+      - id: unknown_size # could be compressed size
+        type: u8
+      - id: unknown_32
+        type: u8
 
   xf_header:
     seq:
