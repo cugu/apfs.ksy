@@ -376,6 +376,7 @@ types:
           cases:
             xfield_type::name: xf_name
             xfield_type::size: xf_size
+            xfield_type::device_node: xf_device_node
     -webide-representation: '#{node_id:dec} / #{parent_id:dec} {xf_used_data}'
 
   xf_name:
@@ -395,6 +396,16 @@ types:
         type: u8
       - id: unknown_32
         type: u8
+
+  xf_device_node:
+    seq:
+      - id: major_minor # Works around lack of a u3 type
+        type: u4
+    instances:
+      major:
+        value: id >> 24
+      minor:
+        value: id & 0xFFFFFF
 
   xf_header:
     seq:
@@ -713,6 +724,8 @@ enums:
   xfield_type:
     516: name
     8200: size
+    8718: device_node
+    10253: unknown_280d
     # Undiscoverd xfield_types:
     #   Doc_id
     #   Dstream
