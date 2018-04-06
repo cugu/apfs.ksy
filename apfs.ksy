@@ -403,9 +403,9 @@ types:
         type: u4
     instances:
       major:
-        value: id >> 24
+        value: major_minor >> 24
       minor:
-        value: id & 0xFFFFFF
+        value: major_minor & 0xFFFFFF
 
   xf_header:
     seq:
