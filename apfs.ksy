@@ -721,9 +721,14 @@ enums:
     #   Sparse_bytes
 
   item_type:
-    4: folder
-    8: file
-    10: symlink
+    1: named_pipe
+    2: character_special
+    4: directory
+    6: block_special
+    8: regular
+    10: symbolic_link
+    12: socket
+    14: whiteout
 
   ea_type:
     2: generic
