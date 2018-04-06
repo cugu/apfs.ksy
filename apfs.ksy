@@ -715,10 +715,10 @@ enums:
   item_type:
     1: named_pipe
     2: character_special
-    4: folder
-    6: block_device
-    8: file
-    10: symlink
+    4: directory
+    6: block_special
+    8: regular
+    10: symbolic_link
     12: socket
     14: whiteout
 
