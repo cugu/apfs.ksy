@@ -377,6 +377,7 @@ types:
             xfield_type::name: xf_name
             xfield_type::size: xf_size
             xfield_type::device_node: xf_device_node
+            xfield_type::sparse_size: xf_sparse_size
     -webide-representation: '#{node_id:dec} / #{parent_id:dec} {xf_used_data}'
 
   xf_name:
@@ -406,6 +407,11 @@ types:
         value: major_minor >> 24
       minor:
         value: major_minor & 0xFFFFFF
+
+  xf_sparse_size:
+    seq:
+      - id: size
+        type: u8
 
   xf_header:
     seq:
@@ -725,7 +731,7 @@ enums:
     516: name
     8200: size
     8718: device_node
-    10253: unknown_280d
+    10253: sparse_size
     # Undiscoverd xfield_types:
     #   Doc_id
     #   Dstream
