@@ -223,12 +223,12 @@ types:
             kind::drec.to_i: drec_val
             kind::inode.to_i: inode_val
             kind::sibling.to_i: sibling_val
-            kind::extent_status.to_i: extent_status_val
+            kind::extent_refcount.to_i: extent_refcount_val
             kind::extent.to_i: extent_val
             kind::entry12.to_i: t12_val
             kind::xattr.to_i: xattr_val
         -webide-parse-mode: eager
-    -webide-representation: '{key_hdr}: {val}'
+    -webide-representation: '{key_hdr} -> {val}'
 
 ## node entry keys
 
@@ -246,7 +246,7 @@ types:
         value: key_high >> 28
         enum: kind
         -webide-parse-mode: eager
-    -webide-representation: '({kind}) {key_value:dec} {content}'
+    -webide-representation: '({kind}) {obj_id:dec}'
 
   omap_key:
     seq:
@@ -326,7 +326,7 @@ types:
     seq:
       - id: parent_id
         type: u8
-      - id: node_id
+      - id: extents_id
         type: u8
       - id: creation_timestamp
         type: u8
@@ -377,7 +377,7 @@ types:
             xfield_type::name: xf_name
             xfield_type::size: xf_size
             xfield_type::device_node: xf_device_node
-    -webide-representation: '#{node_id:dec} / #{parent_id:dec} {xf_used_data}'
+    -webide-representation: '#{extents_id:dec} / #{parent_id:dec} {xf_used_data}'
 
   xf_name:
     seq:
@@ -426,9 +426,9 @@ types:
         type: str
     -webide-representation: '#{node_id:dec} "{name}"'
 
-  extent_status_val: # 0x60
+  extent_refcount_val: # 0x60
     seq:
-      - id: extent_count
+      - id: count
         type: u4
     -webide-representation: '{unknown_0}'
 
@@ -716,7 +716,7 @@ enums:
     0x3: inode
     0x4: xattr
     0x5: sibling
-    0x6: extent_status
+    0x6: extent_refcount
     0x8: extent
     0x9: drec
     0xc: entry12
