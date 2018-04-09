@@ -21,7 +21,7 @@ func createChecksum(data []byte) uint64 {
 }
 ```
 
-The nice feature of the algorithm is, that when you check a block in APFS with the following algorithm you should get null as a result. Note that the input in this case is the whole block, including the checksum.
+The nice feature of the algorithm is, that when you check a block in APFS with the following algorithm you should get null as a result. Note that the input in this case is the whole block, including the checksum. However, because APFS stores the checksum at the start, this means that you have to feed through everything except the checksum, followed by the checksum.
 
 ```go
 func checkChecksum(data []byte) uint64 {
