@@ -223,7 +223,7 @@ types:
             kind::drec.to_i: drec_val
             kind::inode.to_i: inode_val
             kind::sibling.to_i: sibling_val
-            kind::extent_status.to_i: extent_status_val
+            kind::extent_refcount.to_i: extent_refcount_val
             kind::extent.to_i: extent_val
             kind::entry12.to_i: t12_val
             kind::xattr.to_i: xattr_val
@@ -716,7 +716,7 @@ enums:
     0x3: inode
     0x4: xattr
     0x5: sibling
-    0x6: extent_status
+    0x6: extent_refcount
     0x8: extent
     0x9: drec
     0xc: entry12
