@@ -207,10 +207,13 @@ types:
           cases:
             kind::omap: omap_key
             kind::lookup: lookup_key
-            kind::drec: drec_key
-            kind::sibling: sibling_key
+            kind::inode: empty_key
             kind::xattr: drec_key
+            kind::sibling: sibling_key
+            kind::extent_refcount: empty_key
             kind::extent: extent_key
+            kind::drec: drec_key
+            kind::sibling_map: empty_key
         -webide-parse-mode: eager
       val:
         pos: _root.block_size - data_offset - 40 * (_parent.node_type & 1)
@@ -220,15 +223,15 @@ types:
             256: pointer_val # applies to all pointer vals, i.e. any entry val in index nodes
             kind::omap.to_i: omap_val
             kind::lookup.to_i: lookup_val
-            kind::drec.to_i: drec_val
             kind::inode.to_i: inode_val
+            kind::xattr.to_i: xattr_val
             kind::sibling.to_i: sibling_val
             kind::extent_refcount.to_i: extent_refcount_val
             kind::extent.to_i: extent_val
-            kind::entry12.to_i: t12_val
-            kind::xattr.to_i: xattr_val
+            kind::drec.to_i: drec_val
+            kind::sibling_map.to_i: sibling_map_val
         -webide-parse-mode: eager
-    -webide-representation: '{key_hdr} -> {val}'
+    -webide-representation: '{key_hdr} {key} -> {val}'
 
 ## node entry keys
 
@@ -246,7 +249,10 @@ types:
         value: key_high >> 28
         enum: kind
         -webide-parse-mode: eager
-    -webide-representation: '({kind}) {obj_id:dec}'
+    -webide-representation: '({kind}) #{obj_id:dec}'
+
+  empty_key:
+    -webide-representation: ''
 
   omap_key:
     seq:
@@ -288,7 +294,7 @@ types:
     seq:
       - id: object
         type: u8
-    -webide-representation: '#{id2:dec}'
+    -webide-representation: '#{object:dec}'
 
   extent_key:
     seq:
@@ -430,7 +436,7 @@ types:
     seq:
       - id: count
         type: u4
-    -webide-representation: '{unknown_0}'
+    -webide-representation: '{count:dec}'
 
   lookup_val: # 0x20
     seq:
@@ -467,11 +473,11 @@ types:
         enum: item_type
     -webide-representation: '#{node_id:dec}, {item_type}'
 
-  t12_val: # 0xc0
+  sibling_map_val: # 0xc0
     seq:
-      - id: unknown_0
+      - id: map_node_id
         type: u8
-    -webide-representation: '{unknown_0:dec}'
+    -webide-representation: '#{map_node_id:dec}'
 
   xattr_val: # 0x40
     seq:
@@ -719,7 +725,7 @@ enums:
     0x6: extent_refcount
     0x8: extent
     0x9: drec
-    0xc: entry12
+    0xc: sibling_map
 
   xfield_type:
     516: name
