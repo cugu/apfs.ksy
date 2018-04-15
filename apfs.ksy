@@ -320,13 +320,13 @@ types:
 
   omap_val: # 0x00
     seq:
-      - id: block_start
+      - id: flags
         type: u4
-      - id: block_length
+      - id: size
         type: u4
-      - id: obj_id
+      - id: paddr
         type: ref_obj
-    -webide-representation: '{obj_id}, from {block_start:dec}, len {block_length:dec}'
+    -webide-representation: '{paddr}, len {size:dec}'
 
   inode_val: # 0x30
     seq:
