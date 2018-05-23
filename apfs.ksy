@@ -206,6 +206,7 @@ types:
           switch-on: key_hdr.kind
           cases:
             kind::omap: omap_key
+            kind::snapshot_info: empty_key
             kind::lookup: lookup_key
             kind::inode: empty_key
             kind::xattr: drec_key
@@ -213,6 +214,7 @@ types:
             kind::extent_refcount: empty_key
             kind::extent: extent_key
             kind::drec: drec_key
+            kind::snapshot_name: snapshot_name_key
             kind::sibling_map: empty_key
         -webide-parse-mode: eager
       val:
@@ -222,6 +224,7 @@ types:
           cases:
             256: pointer_val # applies to all pointer vals, i.e. any entry val in index nodes
             kind::omap.to_i: omap_val
+            kind::snapshot_info.to_i: snapshot_info_val
             kind::lookup.to_i: lookup_val
             kind::inode.to_i: inode_val
             kind::xattr.to_i: xattr_val
@@ -229,6 +232,7 @@ types:
             kind::extent_refcount.to_i: extent_refcount_val
             kind::extent.to_i: extent_val
             kind::drec.to_i: drec_val
+            kind::snapshot_name.to_i: snapshot_name_val
             kind::sibling_map.to_i: sibling_map_val
         -webide-parse-mode: eager
     -webide-representation: '{key_hdr} {key} -> {val}'
@@ -243,7 +247,7 @@ types:
         type: u4
     instances:
       obj_id:
-        value: key_low + ((key_high & 0x0FFFFFFF) << 32)
+        value: key_low | ((key_high & 0x0FFFFFFF) << 32)
         -webide-parse-mode: eager
       kind:
         value: key_high >> 28
@@ -258,9 +262,7 @@ types:
     seq:
       - id: xid
         type: u8
-      - id: oid
-        type: u8
-    -webide-representation: 'ID {oid:dec} v{xid:dec}'
+    -webide-representation: 'ID v{xid:dec}'
 
   history_key:
     seq:
@@ -285,6 +287,15 @@ types:
       - id: unknown_2
         type: u2
 #        if: flag_1 != 0
+      - id: name
+        size: name_length
+        type: strz
+    -webide-representation: '"{name}"'
+
+  snapshot_name_key:
+    seq:
+      - id: name_length
+        type: u2
       - id: name
         size: name_length
         type: strz
@@ -327,6 +338,29 @@ types:
       - id: paddr
         type: ref_obj
     -webide-representation: '{paddr}, len {size:dec}'
+
+  snapshot_info_val:
+    seq:
+      - id: unknown_0
+        type: ref_obj
+      - id: volume_superblock_ref
+        type: ref_obj
+      - id: unknown_16
+        type: u8
+      - id: unknown_24
+        type: u8
+      - id: unknown_32
+        type: u8
+      - id: unknown_40
+        type: u4
+      - id: unknown_44
+        type: u4
+      - id: name_length
+        type: u2
+      - id: name
+        size: name_length
+        type: strz
+    -webide-representation: 'TODO "{name}"'
 
   inode_val: # 0x30
     seq:
@@ -478,6 +512,12 @@ types:
         type: u2
         enum: item_type
     -webide-representation: '#{node_id:dec}, {item_type}'
+
+  snapshot_name_val:
+    seq:
+      - id: snapshot_id
+        type: u8
+    -webide-representation: '#{snapshot_id:dec}'
 
   sibling_map_val: # 0xc0
     seq:
@@ -712,7 +752,7 @@ enums:
     11: omap
     14: files
     15: extents
-    16: unknown
+    16: snapshot_metadata
 
   tree_type:
     0: om_tree
@@ -724,6 +764,7 @@ enums:
 
   kind:
     0x0: omap
+    0x1: snapshot_info
     0x2: lookup
     0x3: inode
     0x4: xattr
@@ -731,6 +772,7 @@ enums:
     0x6: extent_refcount
     0x8: extent
     0x9: drec
+    0xb: snapshot_name
     0xc: sibling_map
 
   xfield_type:
