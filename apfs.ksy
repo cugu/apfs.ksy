@@ -247,7 +247,7 @@ types:
         type: u4
     instances:
       obj_id:
-        value: key_low + ((key_high & 0x0FFFFFFF) << 32)
+        value: key_low | ((key_high & 0x0FFFFFFF) << 32)
         -webide-parse-mode: eager
       kind:
         value: key_high >> 28
@@ -262,9 +262,7 @@ types:
     seq:
       - id: xid
         type: u8
-      - id: oid
-        type: u8
-    -webide-representation: 'ID {oid:dec} v{xid:dec}'
+    -webide-representation: 'ID v{xid:dec}'
 
   history_key:
     seq:
@@ -344,9 +342,9 @@ types:
   snapshot_info_val:
     seq:
       - id: unknown_0
-        type: u8
-      - id: unknown_8
-        type: u8
+        type: ref_obj
+      - id: volume_superblock_ref
+        type: ref_obj
       - id: unknown_16
         type: u8
       - id: unknown_24
