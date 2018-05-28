@@ -676,7 +676,7 @@ types:
       - id: modified_by
         type: volume_access_info
         repeat: expr
-        repeat-expr: 9
+        repeat-expr: 8
       - id: rest
         size: 344
       - id: volname
