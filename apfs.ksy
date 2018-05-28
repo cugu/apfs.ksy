@@ -688,7 +688,19 @@ types:
       - id: rest
         size: 344
       - id: volname
+        size: 256
         type: strz
+      - id: unknown_960
+        type: u4
+      - id: role_flags
+        type: u4
+      - id: unknown_968
+        type: u8
+      - id: unknown_976
+        type: u8
+      - id: unknown_984
+        type: u8
+      - id: unknown_992
 
 # enums
 
