@@ -677,8 +677,8 @@ types:
         type: volume_access_info
         repeat: expr
         repeat-expr: 8
-      - id: rest
-        size: 344
+      - id: unknown_xid
+        type: u8
       - id: volname
         type: strz
 
