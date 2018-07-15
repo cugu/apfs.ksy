@@ -208,7 +208,7 @@ types:
             kind::omap: omap_key
             kind::lookup: lookup_key
             kind::inode: empty_key
-            kind::xattr: drec_key
+            kind::xattr: xattr_key
             kind::sibling: sibling_key
             kind::extent_refcount: empty_key
             kind::extent: extent_key
@@ -258,9 +258,7 @@ types:
     seq:
       - id: xid
         type: u8
-      - id: oid
-        type: u8
-    -webide-representation: 'ID {oid:dec} v{xid:dec}'
+    -webide-representation: 'XID {xid:dec}'
 
   history_key:
     seq:
@@ -280,11 +278,17 @@ types:
     seq:
       - id: name_length
         type: u1
-      - id: flag_1
+      - id: hash
+        size: 3
+      - id: name
+        size: name_length
+        type: strz
+    -webide-representation: '"{name}"'
+
+  xattr_key:
+    seq:
+      - id: name_length
         type: u1
-      - id: unknown_2
-        type: u2
-#        if: flag_1 != 0
       - id: name
         size: name_length
         type: strz
@@ -463,7 +467,7 @@ types:
       - id: len
         type: u8
       - id: phys_block_num
-        type: ref_obj
+        type: u8
       - id: flags
         type: u8
     -webide-representation: '{phys_block_num}, Len {len:dec}, {flags:dec}'
