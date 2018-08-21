@@ -671,25 +671,25 @@ types:
         size: 16
       - id: last_mod_time
         type: u8
+      - id: encryption_flags
+        type: u8
       - id: formatted_by
         type: volume_access_info
       - id: modified_by
         type: volume_access_info
         repeat: expr
         repeat-expr: 8
-      - id: unknown_xid
-        type: u8
       - id: volname
         type: strz
 
   volume_access_info:
     seq:
-      - id: last_xid
-        type: u8
       - id: id
         size: 32
         type: strz
       - id: timestamp
+        type: u8
+      - id: xid
         type: u8
 
 # enums
