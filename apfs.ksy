@@ -208,7 +208,7 @@ types:
             kind::omap: omap_key
             kind::lookup: lookup_key
             kind::inode: empty_key
-            kind::xattr: drec_key
+            kind::xattr: xattr_key
             kind::sibling: sibling_key
             kind::extent_refcount: empty_key
             kind::extent: extent_key
@@ -258,9 +258,7 @@ types:
     seq:
       - id: xid
         type: u8
-      - id: oid
-        type: u8
-    -webide-representation: 'ID {oid:dec} v{xid:dec}'
+    -webide-representation: 'XID {xid:dec}'
 
   history_key:
     seq:
@@ -280,11 +278,17 @@ types:
     seq:
       - id: name_length
         type: u1
-      - id: flag_1
+      - id: hash
+        size: 3
+      - id: name
+        size: name_length
+        type: strz
+    -webide-representation: '"{name}"'
+
+  xattr_key:
+    seq:
+      - id: name_length
         type: u1
-      - id: unknown_2
-        type: u2
-#        if: flag_1 != 0
       - id: name
         size: name_length
         type: strz
@@ -383,6 +387,7 @@ types:
             xfield_type::name: xf_name
             xfield_type::size: xf_size
             xfield_type::device_node: xf_device_node
+            xfield_type::document_id: xf_document_id
             xfield_type::sparse_size: xf_sparse_size
     -webide-representation: '#{extents_id:dec} / #{parent_id:dec} {xf_used_data}'
 
@@ -413,6 +418,11 @@ types:
         value: major_minor >> 24
       minor:
         value: major_minor & 0xFFFFFF
+
+  xf_document_id:
+    seq:
+      - id: id
+        type: u4
 
   xf_sparse_size:
     seq:
@@ -463,7 +473,7 @@ types:
       - id: len
         type: u8
       - id: phys_block_num
-        type: ref_obj
+        type: u8
       - id: flags
         type: u8
     -webide-representation: '{phys_block_num}, Len {len:dec}, {flags:dec}'
@@ -680,7 +690,19 @@ types:
         repeat: expr
         repeat-expr: 8
       - id: volname
+        size: 256
         type: strz
+      - id: unknown_960
+        type: u4
+      - id: role_flags
+        type: u4
+      - id: unknown_968
+        type: u8
+      - id: unknown_976
+        type: u8
+      - id: unknown_984
+        type: u8
+      - id: unknown_992
 
   volume_access_info:
     seq:
@@ -738,6 +760,7 @@ enums:
   xfield_type:
     516: name
     8200: size
+    8707: document_id
     8718: device_node
     10253: sparse_size
     # Undiscoverd xfield_types:
