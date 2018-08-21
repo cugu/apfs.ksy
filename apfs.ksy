@@ -681,22 +681,14 @@ types:
         size: 16
       - id: last_mod_time
         type: u8
-      - id: formatted_by_last_xid
+      - id: encryption_flags
         type: u8
-      - id: formatted_by_id
-        size: 32
-        type: strz
-      - id: formatted_by_timestamp
-        type: u8
-      - id: modified_by_last_xid
-        type: u8
-      - id: modified_by_id
-        type: strz
-        size: 32
-      - id: modified_by_timestamp
-        type: u8
-      - id: rest
-        size: 344
+      - id: formatted_by
+        type: volume_access_info
+      - id: modified_by
+        type: volume_access_info
+        repeat: expr
+        repeat-expr: 8
       - id: volname
         size: 256
         type: strz
@@ -711,6 +703,16 @@ types:
       - id: unknown_984
         type: u8
       - id: unknown_992
+
+  volume_access_info:
+    seq:
+      - id: id
+        size: 32
+        type: strz
+      - id: timestamp
+        type: u8
+      - id: xid
+        type: u8
 
 # enums
 
