@@ -1,4 +1,4 @@
-# [apfs.ksy](https://github.com/cugu/apfs.ksy/blob/master/apfs.ksy) ![stability-experimental](https://img.shields.io/badge/stability-experimental-orange.svg) [![CircleCI](https://circleci.com/gh/cugu/apfs.ksy.svg?style=shield&circle-token=15c0e9d1824e893ef4ac06a35aa3fef6f5fd4d97)](https://circleci.com/gh/cugu/apfs.ksy)
+# [apfs.ksy](https://github.com/cugu/apfs.ksy/blob/master/apfs.ksy)
 
 APFS filesystem format for Kaitai Struct (http://kaitai.io/)
 
