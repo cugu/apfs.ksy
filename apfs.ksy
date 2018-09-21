@@ -29,6 +29,22 @@ types:
 
 # base types
 
+  paddr_t:
+    doc: |
+      universal type to address a block: it both parses one u8-sized
+      block address and provides a lazy instance to parse that block
+      right away.
+    seq:
+      - id: val
+        type: u8
+    instances:
+      target:
+        io: _root._io
+        pos: val * _root.block_size
+        type: obj
+        size: _root.block_size
+    -webide-representation: 'blk {val:dec}'
+
   prange_t:
     seq:
       - id: pr_start_paddr
@@ -37,10 +53,7 @@ types:
         type: u8
 
   oid_t:
-    doc: |
-      universal type to address a block: it both parses one u8-sized
-      block address and provides a lazy instance to parse that block
-      right away.
+    doc: similar to paddr_t
     seq:
       - id: val
         type: u8
@@ -76,22 +89,22 @@ types:
         enum: object_type
       - id: o_flags
         type: u2
-        enum: object_type_flags
+        # enum: object_type_flags
       - id: o_subtype
         type: u4
         enum: object_type
         doc: the objectʼs subtype.
-    instances:
-      # type:
-      #   value: type & 0x0000ffff
-      #   enum: object_type
-      # flags:
-      #   value: o_type & 0xffff0000
-      #   enum: object_type_flags
-      storagetype:
-        value: o_flags.to_i & 0xc000
-      flags_defined:
-        value: o_flags.to_i & 0xf800
+    # instances:
+    #   type:
+    #     value: type & 0x0000ffff
+    #     enum: object_type
+    #   flags:
+    #     value: o_type & 0xffff0000
+    #     enum: object_type_flags
+    #   storagetype:
+    #     value: o_flags.to_i & 0xc000
+    #   flags_defined:
+    #     value: o_flags.to_i & 0xf800
 
   obj:
     seq:
@@ -173,21 +186,21 @@ types:
       - id: nx_counters
         repeat: expr
         repeat-expr: 32 # nx_num_counters
-        type: u8 
+        type: u8
       - id: nx_blocked_out_prange
-        type: prange_t 
+        type: prange_t
       - id: nx_evict_mapping_tree_oid
-        type: oid_t 
+        type: oid_t
       - id: nx_flags
-        type: u8 
+        type: u8
       - id: nx_efi_jumpstart
-        type: u8 
+        type: u8
       - id: nx_fusion_uuid
-        size: 16 
+        size: 16
       - id: nx_keylocker
-        type: prange_t 
+        type: prange_t
       - id: nx_ephemeral_info
-        type: u8 
+        type: u8
         repeat: expr
         repeat-expr: 4
       - id: nx_test_oid
@@ -262,6 +275,7 @@ types:
         type:
           switch-on: j_key_t.obj_type
           cases:
+            j_obj_types::apfs_type_any: omap_key_t
             j_obj_types::apfs_type_extent: j_empty_key_t
             j_obj_types::apfs_type_inode: j_empty_key_t
             j_obj_types::apfs_type_xattr: j_xattr_key_t
@@ -277,6 +291,7 @@ types:
           switch-on: '(_parent.btn_level > 0) ? 256 : j_key_t.obj_type.to_i'
           cases:
             256: pointer_val_t # applies to all pointer vals, i.e. any entry val in index nodes
+            j_obj_types::apfs_type_any.to_i: omap_val_t
             j_obj_types::apfs_type_extent.to_i: j_phys_ext_val_t
             j_obj_types::apfs_type_inode.to_i: j_inode_val_t
             j_obj_types::apfs_type_xattr.to_i: j_xattr_val_t
@@ -312,9 +327,9 @@ types:
   omap_key_t:
     seq:
       - id: ok_oid
-        type: oid_t 
+        type: oid_t
       - id: ok_xid
-        type: xid_t 
+        type: xid_t
     -webide-representation: 'xid {ok_xid:dec}'
 
   history_key_t:
@@ -380,7 +395,7 @@ types:
       - id: ov_size
         type: u4
       - id: ov_paddr
-        type: u8
+        type: paddr_t
     -webide-representation: '{ov_paddr}, len {ov_size:dec}'
 
   j_inode_val_t: # 0x30
@@ -439,10 +454,10 @@ types:
           switch-on: xf_data[_index].x_type
           cases:
             ino_ext_type::ino_ext_type_name: xf_name
-            ino_ext_type::size: xf_size
-            ino_ext_type::device_node: xf_device_node
+            ino_ext_type::ino_ext_type_prev_fsize: xf_size
+            ino_ext_type::ino_ext_type_rdev: xf_device_node
             ino_ext_type::ino_ext_type_document_id: xf_document_id
-            ino_ext_type::sparse_size: xf_sparse_size
+            ino_ext_type::ino_ext_type_sparse_bytes: xf_sparse_size
     -webide-representation: '#{private_id:dec} / #{parent_id:dec} {xf_used_data}'
 
   x_field_t:
@@ -703,7 +718,7 @@ types:
         type: u4
       - id: apfs_features
         type: u8
-        enum: features
+        # enum: features
       - id: apfs_readonly_compatible_features
         type: u8
       - id: apfs_incompatible_features
@@ -760,6 +775,7 @@ types:
         repeat: expr
         repeat-expr: 8 # apfs_max_hist
       - id: apfs_volname
+        type: strz
         size: 256
       - id: apfs_next_doc_id
         type: u4
@@ -775,7 +791,7 @@ types:
   apfs_modified_by_t:
     seq:
       - id: id
-        size: 8 # apfs_modified_namelen
+        size: 32 # apfs_modified_namelen
       - id: timestamp
         type: u8
       - id: last_xid
@@ -812,16 +828,16 @@ enums:
     0x00000019: object_type_gbitmap
     0x0000001a: object_type_gbitmap_tree
     0x0000001b: object_type_gbitmap_block
-    0x00000000: object_type_invalid 
-    0x000000ff: object_type_test 
+    0x00000000: object_type_invalid
+    0x000000ff: object_type_test
 
   object_type_flags:
-    0x00000000: obj_virtual 
-    0x80000000: obj_ephemeral 
-    0x40000000: obj_physical 
-    0x20000000: obj_noheader 
-    0x10000000: obj_encrypted 
-    0x08000000: obj_nonpersistent 
+    0x00000000: obj_virtual
+    0x80000000: obj_ephemeral
+    0x40000000: obj_physical
+    0x20000000: obj_noheader
+    0x10000000: obj_encrypted
+    0x08000000: obj_nonpersistent
 
   checkpoint_map_flags:
     0x00000001: checkpoint_map_last
@@ -848,22 +864,22 @@ enums:
     10: apfs_type_dir_stats
     11: apfs_type_snap_name
     12: apfs_type_sibling_map
-    12: apfs_type_max_valid
-    15: apfs_type_max
-    15: apfs_type_invalid
 
   ino_ext_type:
-    516: ino_ext_type_name
-    8200: size
-    8707: ino_ext_type_document_id
-    8718: device_node
-    10253: sparse_size
-    # undiscoverd ino_ext_types:
-    #   doc_id
-    #   dstream
-    #   dir_stats_key
-    #   uuid
-    #   sparse_bytes
+    1: ino_ext_type_snap_xid
+    2: ino_ext_type_delta_tree_oid
+    3: ino_ext_type_document_id
+    4: ino_ext_type_name
+    5: ino_ext_type_prev_fsize
+    6: ino_ext_type_reserved_6
+    7: ino_ext_type_finder_info
+    8: ino_ext_type_dstream
+    9: ino_ext_type_reserved_9
+    10: ino_ext_type_dir_stats_key
+    11: ino_ext_type_fs_uuid
+    12: ino_ext_type_reserved_12
+    13: ino_ext_type_sparse_bytes
+    14: ino_ext_type_rdev
 
   item_type:
     1: named_pipe
