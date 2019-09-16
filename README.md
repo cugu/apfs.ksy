@@ -22,6 +22,7 @@ Information about the checksum calculation can be found in [checksum.md](docs/ch
 
  - [**iBored**](http://files.tempel.org/iBored) by [Thomas Tempelmann](https://github.com/tempelmann): Free hex editor with support for APFS volumes starting in version 1.2 (Note that these beta versions may contain support only for APFS, whereas the official (older) release supports many other formats like FAT, HFS etc.. While it does currently not read this ksy file for its templates feature, its templates.xml file is modeled (manually) after this ksy file.
  - [**Find Any File**](http://apps.tempel.org/FindAnyFile/) by [Thomas Tempelmann](https://github.com/tempelmann): Fast search for filenames on a disk.
+  - [**010 Editor + APFS template**](http://sweetscape.com/010editor/) by [Yogesh Khatri](https://github.com/ydkhatri):  hex editor with support for APFS volumes - use this template https://github.com/ydkhatri/APFS_010
 
 ## Contributing
 Pull requests and issues are welcome!
