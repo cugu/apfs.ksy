@@ -1,3 +1,7 @@
+> ## This project is not maintained any more. 
+> 
+> Feel free to fork it. If you have an active fork and you want to be linked here you can [contact me](https://twitter.com/jonas_plum).
+
 # [apfs.ksy](https://github.com/cugu/apfs.ksy/blob/master/apfs.ksy)
 
 APFS filesystem format for Kaitai Struct (http://kaitai.io/)
